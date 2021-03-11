@@ -16,6 +16,7 @@ from .GaussianQuadrature import *
 from .Node import *
 from .Mesh import Mesh
 
+
 class GaussianIntegration():
 
     def __init__(self, DesignMesh, ControlMesh, FilterRadius):
@@ -24,7 +25,8 @@ class GaussianIntegration():
         self.Control = ControlMesh
         self.FilterRadius = FilterRadius
 
-        self.MappingMatrix = np.zeros([len(self.Design.Nodes), len(self.Control.Nodes)])
+        self.MappingMatrix = np.zeros([len(self.Design.Nodes),
+                                       len(self.Control.Nodes)])
         self.nGP = 2
         self.ControlSpace = self.Control.Space()
         self.DesignSpace = self.Design.Space()
