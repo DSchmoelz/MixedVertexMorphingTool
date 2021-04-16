@@ -45,7 +45,7 @@ class GaussianIntegration():
 
                         self.MappingMatrix[self.Design.GetNodeIndex(design_node.id), self.Control.GetNodeIndex(control_node.id)] += interval_length/2 * LinearHatFunction(gauss_point, design_node.x, self.FilterRadius) * self.Control.GetShapeFunctionValueOfNode(gauss_point, control_node) * gauss_weight
 
-    'Funktioniert noch nicht! Filter Funktion muss noch angepasst werden.'
+    #TODO: Funktioniert noch nicht! Filter Funktion muss noch angepasst werden.
     def CalculateVaryingFilter(self):
         for design_node in self.Design.Nodes:
 
@@ -89,3 +89,55 @@ class GaussianIntegration():
             intervals[i,:] = interval_points[i:i+2]
 
         return intervals
+
+class RiemannSum():
+
+    def __init__(self, DesignMesh, ControlMesh, FilterRadius):
+
+        self.Design = DesignMesh
+        self.Control = ControlMesh
+        self.FilterRadius = FilterRadius
+
+        self.MappingMatrix = np.zeros([len(self.Design.Nodes),
+                                       len(self.Control.Nodes)])
+        self.nGP = 2
+        self.ControlSpace = self.Control.Space()
+        self.DesignSpace = self.Design.Space()
+
+    def Calculate(self):
+
+        nodal_areas = self.Control.ComputeNodalAreas()
+        max_sum_of_weights = 0
+
+        for design_node in self.Design.Nodes:
+
+            control_neighbour_nodes = self.Control.GetNodeInFilterRadius(design_node.x, self.FilterRadius, self.FilterRadius)
+            weights = np.zeros(len(control_neighbour_nodes))
+            sum_of_weights = 0
+
+            for i in range(len(control_neighbour_nodes)):
+
+                control_neighbour_node = control_neighbour_nodes[i]
+
+                neighbour_nodes_index = self.Control.GetNodeIndex(control_neighbour_node.id)
+                nodal_area_i = nodal_areas[neighbour_nodes_index]
+
+                weight = nodal_area_i * LinearFilter(control_neighbour_node.x, design_node.x, self.FilterRadius)
+                weights[i] = weight
+                sum_of_weights += weight
+
+                self.MappingMatrix[self.Design.GetNodeIndex(design_node.id), self.Control.GetNodeIndex(control_neighbour_node.id)] += weights[i]
+
+            max_sum_of_weights = max(max_sum_of_weights, sum_of_weights)
+
+        self.MappingMatrix /= max_sum_of_weights
+
+            # TODO: im ShapeModul wird sum_of_weigths verwendet, um Mapping Matrix zu skalieren.
+            # Warum benötige ich hier max_sum_of_weights?
+
+            # for i in range(len(control_neighbour_nodes)):
+
+            #     control_neighbour_node = control_neighbour_nodes[i]
+
+            #     if abs(sum_of_weights) > 1e-16:
+            #         self.MappingMatrix[self.Design.GetNodeIndex(design_node.id), self.Control.GetNodeIndex(control_neighbour_node.id)] += weights[i] #/ sum_of_weights

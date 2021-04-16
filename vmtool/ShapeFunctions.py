@@ -24,6 +24,19 @@ def LinearHatFunction(zeta, zeta_i, n):
 
     return N
 
+def LinearFilter(zeta, zeta_i, n):
+
+    if (zeta_i-n) <= zeta and zeta <= zeta_i:
+        N = 1 + (zeta-zeta_i) / n
+
+    elif zeta_i <= zeta and zeta <= (zeta_i+n):
+        N = 1 - (zeta-zeta_i) / n
+
+    else:
+        N = 0
+
+    return N
+
 def LinearNodeShapeFunction(zeta, zeta_i, r_left, r_right):
 
     if (zeta_i-r_left) <= zeta and zeta <= zeta_i and r_left != 0:

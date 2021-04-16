@@ -172,3 +172,13 @@ class Mesh(object):
                 nodes_in_filter.append(node)
 
         return nodes_in_filter
+
+    def ComputeNodalAreas(self):
+
+        nodal_areas = np.zeros(len(self.Nodes))
+
+        for node in self.Nodes:
+            nodal_areas[self.GetNodeIndex(node.id)] = np.sum(self.GetNodeShapeFunctionLengths(node.id))
+
+        return nodal_areas
+
