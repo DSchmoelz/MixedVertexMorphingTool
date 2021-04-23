@@ -5,7 +5,7 @@
 # Author: David Schmölz
 # david.schmoelz@tum.de
 #####################################################################
-# Least-Square Response
+# Target Geometry Response
 #####################################################################
 
 # external imports
