@@ -20,6 +20,7 @@ class DesignNode(Node):
         super().__init__(id, x)
         self.z = z
 
+# TODO: ControlNodes volltändig löschen?
 class ControlNode(Node):
 
     def __init__(self, id, x, p):

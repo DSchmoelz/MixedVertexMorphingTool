@@ -48,7 +48,7 @@ class Mesh(object):
     def GetGeometryAt(self, x):
 
         y = 0
-
+        # TODO: Funktion funktioniert derzeit nur für "ControlMeshes", da node.p verwendet wird und nicht node.z
         for node in self.Nodes:
             shape_function_lengths = self.GetNodeShapeFunctionLengths(node.id)
             y += LinearNodeShapeFunction(x, node.x, shape_function_lengths[0], shape_function_lengths[1]) * node.p
