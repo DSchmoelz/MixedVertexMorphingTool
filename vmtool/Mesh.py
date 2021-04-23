@@ -71,6 +71,16 @@ class Mesh(object):
 
         return np.array(nodes_x)
 
+    # TODO: Bessere Funktion Erstellen / Namen Ändern?
+    def GetShapeZ(self):
+
+        nodes_z = []
+
+        for node in self.Nodes:
+            nodes_z.append(node.z)
+
+        return np.array(nodes_z)
+
     def GetNodeIds(self):
         node_ids = []
 
@@ -182,3 +192,7 @@ class Mesh(object):
 
         return nodal_areas
 
+    def UpdateDesignVariables(self, design_update):
+
+        for node in self.Nodes:
+            node.z += design_update[self.GetNodeIndex(node.id)]

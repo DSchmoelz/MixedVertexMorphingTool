@@ -20,8 +20,9 @@ class TargetGeometryResponse():
     # Nodal response value: g_i = z_i_target - z_i
     # Aggregation of the nodal values by square sum:
     # g = sum(g_i²) = sum[(z_i_target - z_i)²]
-    def __init__(self, DesignMesh, TargetMesh):
+    def __init__(self, Name, DesignMesh, TargetMesh):
 
+        self.Name = Name
         self.Design = DesignMesh
         self.Target = TargetMesh
         self.Gradients = np.zeros(len(DesignMesh.Nodes))

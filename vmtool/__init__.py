@@ -3,6 +3,9 @@ from .Mesh import Mesh
 from .ForwardMapping import *
 from .ShapeFunctions import *
 from .TargetResponse import TargetGeometryResponse
+from .SteepestDescentAlgorithm import SteepestDescentAlgorithm
+from .StepSize import *
+from .Convergence import *
 
 def test():
     import unittest
