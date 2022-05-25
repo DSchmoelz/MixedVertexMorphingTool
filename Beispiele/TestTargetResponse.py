@@ -53,7 +53,7 @@ DesignMesh.AddNodes(DesignNodeList)
 plt.figure()
 plt.plot(x_j, p_j, '-*', color='lightgrey', label='target polygon')
 
-Response = TargetGeometryResponse(DesignMesh, TargetMesh)
+Response = TargetGeometryResponse("target", DesignMesh, TargetMesh)
 
 Response.Calculate()
 

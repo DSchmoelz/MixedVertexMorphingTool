@@ -1,6 +1,7 @@
 from .Node import *
 from .Mesh import Mesh
 from .ForwardMapping import *
+from .RigidBodyParameterization import *
 from .ShapeFunctions import *
 from .TargetResponse import TargetGeometryResponse
 from .SteepestDescentAlgorithm import SteepestDescentAlgorithm

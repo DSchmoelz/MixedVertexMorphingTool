@@ -30,6 +30,7 @@ class GaussianIntegration():
         self.nGP = 2
         self.ControlSpace = self.Control.Space()
         self.DesignSpace = self.Design.Space()
+        self.ControlSize = len(self.Control.Nodes)
 
     def Calculate(self):
         for design_node in self.Design.Nodes:

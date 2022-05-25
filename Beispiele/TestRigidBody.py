@@ -16,17 +16,28 @@ from vmtool import *
 import matplotlib.pyplot as plt
 
 def target_geometry(x_j):
-    if x_j < 0:
-        p_j = 3/4 * x_j + 3
-    elif x_j > 0:
-        p_j = -3/4 * x_j + 3
-    else:
-        p_j = 3
+    p_j = x_j / 2 + 4
+
     return p_j
+
+## Design Geometry
+filter_radius = 4
+x_limit = filter_radius + 4
+design_number_of_nodes = 2*(x_limit)+1
+x_i = np.linspace(-x_limit, x_limit, design_number_of_nodes)
+
+DesignNodeList = []
+design_ids = np.arange(design_number_of_nodes)
+for i in range(0, design_number_of_nodes):
+    DesignNodeList.append(DesignNode(design_ids[i], x_i[i], 0))
+
+DesignMesh = Mesh("design")
+DesignMesh.AddNodes(DesignNodeList)
+
 
 ## Target Geometry
 target_number_of_nodes = 3
-x_j = np.linspace(-4, 4, target_number_of_nodes)
+x_j = np.linspace(-x_limit, x_limit, target_number_of_nodes)
 p_j = np.zeros(target_number_of_nodes)
 
 TargetNodeList = []
@@ -38,19 +49,6 @@ for i in range(0, target_number_of_nodes):
 TargetMesh = Mesh("target")
 TargetMesh.AddNodes(TargetNodeList)
 
-## Design Geometry
-filter_radius = 4
-x_limit = filter_radius + 4
-design_number_of_nodes = (x_limit)*1+1
-x_i = np.linspace(-x_limit, x_limit, design_number_of_nodes)
-
-DesignNodeList = []
-design_ids = np.arange(design_number_of_nodes)
-for i in range(0, design_number_of_nodes):
-    DesignNodeList.append(DesignNode(design_ids[i], x_i[i], 0))
-
-DesignMesh = Mesh("design")
-DesignMesh.AddNodes(DesignNodeList)
 
 ## Control Geometry
 ControlNodeList = []
@@ -60,33 +58,31 @@ control_ids = np.arange(control_number_of_nodes)
 for i in range(0, control_number_of_nodes):
     ControlNodeList.append(ControlNode(control_ids[i], x_p[i], 0))
 
-# ControlNodeList.append(ControlNode(i+1, 0, 0))
-# ControlNodeList.append(ControlNode(i+2, 0, 0))
-# ControlNodeList.append(ControlNode(i+3, 0, 0))
-
 ControlMesh = Mesh("control")
 ControlMesh.AddNodes(ControlNodeList)
 
 ## Optimization Set-Up
 Response = TargetGeometryResponse("target", DesignMesh, TargetMesh)
 
-## TODO: Mit Gaussian Integration Funktioniert Optimierung noch nicht!! Warum??
-Mapper = ForwardMapping.RiemannSum(DesignMesh, ControlMesh, filter_radius)
-StepSizeSettings = ConstStepInControl(1)
-ConvergenceSettings = MaxSteps(100)
+Mapper = RigidBodyParameterization(DesignMesh)
+StepSizeSettings = ConstStepInControl(0.1)
+ConvergenceSettings = MaxSteps(10)
 
 OptimizationAlgorithm = SteepestDescentAlgorithm("Optimierung", Mapper, ConvergenceSettings, StepSizeSettings)
 OptimizationAlgorithm.AddObjective(Response)
 
 ## Start Optimization
 OptimizationAlgorithm.StartOptimization()
+print(OptimizationAlgorithm.Mapper.MappingMatrix)
+print(OptimizationAlgorithm.OldControlFields[0]["dg/dp"])
+print(OptimizationAlgorithm.Objectives["target"].Value)
 
 ## Plot
 plt.figure()
 plt.plot(x_j, p_j, '-*', color='lightgrey', label='target shape')
 
 FinalShape = OptimizationAlgorithm.Mapper.Design
-plt.plot(FinalShape.GetNodeCoordinatesX(), FinalShape.GetShapeZ(), '-', label='design shape with r = {} after {} iterations'.format(filter_radius, ConvergenceSettings.MaxSteps))
+plt.plot(FinalShape.GetNodeCoordinatesX(), FinalShape.GetShapeZ(), '-', label='design shape after {} iterations'.format(ConvergenceSettings.MaxSteps))
 
 plt.legend()
 plt.show()

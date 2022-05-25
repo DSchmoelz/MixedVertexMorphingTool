@@ -26,7 +26,7 @@ class SteepestDescentAlgorithm(object):
         self.Objectives = {}
         self.DesignFields = {}
         self.ControlFields = {}
-        self.OldMapperList = []
+        # self.OldMapperList = []
         self.OldDesignFields = []
         self.OldControlFields = []
 
@@ -34,7 +34,7 @@ class SteepestDescentAlgorithm(object):
 
         self.Objectives[Response.Name] = Response
         self.DesignFields["d{}/dz".format(Response.Name)] = np.zeros(len(self.Mapper.Design.Nodes))
-        self.ControlFields["d{}/dp".format(Response.Name)] = np.zeros(len(self.Mapper.Control.Nodes))
+        self.ControlFields["d{}/dp".format(Response.Name)] = np.zeros(self.Mapper.ControlSize)
 
     def StartOptimization(self):
 
@@ -59,7 +59,7 @@ class SteepestDescentAlgorithm(object):
     def _MapObjectiveGradients(self):
         # TODO: Funktioniert derzeit nur für eine Response
         weight = 1
-        self.ControlFields["dg/dp"] = np.zeros(len(self.Mapper.Control.Nodes))
+        self.ControlFields["dg/dp"] = np.zeros(self.Mapper.ControlSize)
         for objective in self.Objectives.values():
             mapped_gradients = self.Mapper.MappingMatrix.transpose() @ objective.Gradients
             self.ControlFields["d{}/dp".format(objective.Name)] = mapped_gradients
@@ -80,10 +80,10 @@ class SteepestDescentAlgorithm(object):
 
     def _UpdateDesign(self):
         # save old geometry in old mapper
-        self.OldMapperList.append(self.Mapper)
+        # self.OldMapperList.append(self.Mapper)
         # save old design and control fields
-        self.OldDesignFields.append(self.DesignFields)
-        self.OldControlFields.append(self.ControlFields)
+        self.OldDesignFields.append(self.DesignFields.copy())
+        self.OldControlFields.append(self.ControlFields.copy())
 
         design_update = self.DesignFields["delta_z"]
         self.Mapper.Design.UpdateDesignVariables(design_update)
