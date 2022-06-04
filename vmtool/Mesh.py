@@ -137,9 +137,9 @@ class Mesh(object):
         nodes_x = self.GetNodeCoordinatesX()
 
         absolute_distance = np.abs(nodes_x - node.x)
-        # set absolute distance of input node from 0 to 1e16
+        # set absolute distance of input node from 0 to float(1e8)
         node_index = self.GetNodeIndex(node_id)
-        absolute_distance[node_index] = 1e16
+        absolute_distance[node_index] = float(1e8)
 
         closest_node_index = absolute_distance.argmin()
 
@@ -150,19 +150,19 @@ class Mesh(object):
             return neighbour
 
         else:
-            # add 1e16 to the distance of the already found node
-            absolute_distance[closest_node_index] += 1e16
+            # add float(1e8) to the distance of the already found node
+            absolute_distance[closest_node_index] += float(1e8)
             if node1.x < node.x:
                 for nodej in self.Nodes:
                     if nodej.x < node.x:
                         indexj = self.GetNodeIndex(nodej.id)
-                        absolute_distance[indexj] += 1e16
+                        absolute_distance[indexj] += float(1e8)
 
             elif node1.x > node.x:
                 for nodej in self.Nodes:
                     if nodej.x > node.x:
                         indexj = self.GetNodeIndex(nodej.id)
-                        absolute_distance[indexj] += 1e16
+                        absolute_distance[indexj] += float(1e8)
 
             closest_node_index = absolute_distance.argmin()
             node2 = self.Nodes[closest_node_index]
