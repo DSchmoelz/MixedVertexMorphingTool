@@ -11,9 +11,9 @@
 import numpy as np
 import unittest
 
-import sys
-import path_setting
-sys.path.append(path_setting.path)
+# import sys
+# import path_setting
+# sys.path.append(path_setting.path)
 from vmtool import *
 
 class TestMesh(unittest.TestCase):
