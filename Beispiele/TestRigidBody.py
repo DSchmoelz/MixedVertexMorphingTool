@@ -64,25 +64,41 @@ ControlMesh.AddNodes(ControlNodeList)
 ## Optimization Set-Up
 Response = TargetGeometryResponse("target", DesignMesh, TargetMesh)
 
-Mapper = RigidBodyParameterization(DesignMesh)
-StepSizeSettings = ConstStepInControl(0.1)
+rigid_body_settings = {
+    "translation": True,
+    "rotation": True,
+    "scaling": "shape"
+}
+Mapper = RigidBodyParameterization(DesignMesh, rigid_body_settings)
+StepSizeSettings = ConstStepInControl(1.0)
 ConvergenceSettings = MaxSteps(10)
 
-OptimizationAlgorithm = SteepestDescentAlgorithm("Optimierung", Mapper, ConvergenceSettings, StepSizeSettings)
+OptimizationAlgorithm = SteepestDescentAlgorithm("Optimierung", Mapper, ConvergenceSettings, StepSizeSettings, NormalizeObjGrad=True)
 OptimizationAlgorithm.AddObjective(Response)
 
 ## Start Optimization
 OptimizationAlgorithm.StartOptimization()
-print(OptimizationAlgorithm.Mapper.MappingMatrix)
-print(OptimizationAlgorithm.OldControlFields[0]["dg/dp"])
-print(OptimizationAlgorithm.Objectives["target"].Value)
+# print(OptimizationAlgorithm.Mapper.MappingMatrix)
+for i in range(len(OptimizationAlgorithm.PreviousControlFields)):
+    print(20*"-")
+    print("optimization step {}".format(i+1))
+    print("gradient {}".format(OptimizationAlgorithm.PreviousControlFields[i]["dg/dp"]))
+    print("control update {}".format(OptimizationAlgorithm.PreviousControlFields[i]["delta_p"]))
+    print("objective value {}".format(OptimizationAlgorithm.PreviousObjectiveValue[i]))
 
+print(40*"-")
+print("final objective value {}".format(OptimizationAlgorithm.PreviousObjectiveValue[-1]))
+
+f = OptimizationAlgorithm.PreviousObjectiveValue
 ## Plot
-plt.figure()
-plt.plot(x_j, p_j, '-*', color='lightgrey', label='target shape')
+fig, axis = plt.subplots(2, figsize=[5.0,8.0])
+axis[0].plot(x_j, p_j, '-*', color='lightgrey', label='target shape')
 
 FinalShape = OptimizationAlgorithm.Mapper.Design
-plt.plot(FinalShape.GetNodeCoordinatesX(), FinalShape.GetShapeZ(), '-', label='design shape after {} iterations'.format(ConvergenceSettings.MaxSteps))
+axis[0].plot(FinalShape.GetNodeCoordinatesX(), FinalShape.GetShapeZ(), '-', label='design shape after {} iterations'.format(ConvergenceSettings.MaxSteps))
+axis[0].axis('equal')
+axis[0].legend()
 
-plt.legend()
+axis[1].plot(f)
+axis[1].set(xlabel="Step", ylabel="Objective")
 plt.show()

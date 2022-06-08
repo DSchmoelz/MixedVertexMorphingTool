@@ -1,1 +1,1 @@
-path = '/home/david/Software/VertexMorphingTool/repo/'
+path = 'C:/Promotion/VertexMorphingTool/vertexmorphingtool/'
