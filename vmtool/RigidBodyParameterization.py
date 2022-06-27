@@ -51,7 +51,7 @@ class RigidBodyParameterization():
             self.MappingMatrix[:, computed_parameters:computed_parameters+1] = self.ComputeRotationMapping()
 
         if self.scaling_type == "none":
-            pass
+            self.scaling_matrix = np.eye(self.ControlSize)
         elif self.scaling_type == "column":
             self.scaling_matrix = np.zeros([self.ControlSize, self.ControlSize])
             for column in range(self.ControlSize):
@@ -82,6 +82,14 @@ class RigidBodyParameterization():
 
         return design_update
 
+    def GetUnscaledControlParameter(self, control_update):
+
+        if self.scaling_type == "none":
+            unscaled_control_update = control_update
+        elif self.scaling_type == "column" or self.scaling_type == "shape":
+            unscaled_control_update = self.scaling_matrix @ control_update
+
+        return unscaled_control_update
 
     def ComputeTranslationMapping(self):
 

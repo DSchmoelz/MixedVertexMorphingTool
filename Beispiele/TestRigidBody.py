@@ -14,28 +14,16 @@ import path_setting
 sys.path.append(path_setting.path)
 from vmtool import *
 import matplotlib.pyplot as plt
+from RigidBodyObjectivePlot import create_objective_plot
 
 def target_geometry(x_j):
     p_j = x_j / 2 + 4
 
     return p_j
 
-## Design Geometry
+## Target Geometry
 filter_radius = 4
 x_limit = filter_radius + 4
-design_number_of_nodes = 2*(x_limit)+1
-x_i = np.linspace(-x_limit, x_limit, design_number_of_nodes)
-
-DesignNodeList = []
-design_ids = np.arange(design_number_of_nodes)
-for i in range(0, design_number_of_nodes):
-    DesignNodeList.append(DesignNode(design_ids[i], x_i[i], 0))
-
-DesignMesh = Mesh("design")
-DesignMesh.AddNodes(DesignNodeList)
-
-
-## Target Geometry
 target_number_of_nodes = 3
 x_j = np.linspace(-x_limit, x_limit, target_number_of_nodes)
 p_j = np.zeros(target_number_of_nodes)
@@ -49,56 +37,77 @@ for i in range(0, target_number_of_nodes):
 TargetMesh = Mesh("target")
 TargetMesh.AddNodes(TargetNodeList)
 
+# scaling_types = ["none"]
+scaling_types =["none", "column", "shape"]
 
-## Control Geometry
-ControlNodeList = []
-control_number_of_nodes = design_number_of_nodes
-x_p = np.linspace(-4, 4, design_number_of_nodes)
-control_ids = np.arange(control_number_of_nodes)
-for i in range(0, control_number_of_nodes):
-    ControlNodeList.append(ControlNode(control_ids[i], x_p[i], 0))
+fig, ax = create_objective_plot()
 
-ControlMesh = Mesh("control")
-ControlMesh.AddNodes(ControlNodeList)
+for scaling_type in scaling_types:
 
-## Optimization Set-Up
-Response = TargetGeometryResponse("target", DesignMesh, TargetMesh)
+    ## Design Geometry
+    design_number_of_nodes = 2*(x_limit)+1
+    x_i = np.linspace(-x_limit, x_limit, design_number_of_nodes)
+    DesignNodeList = []
+    design_ids = np.arange(design_number_of_nodes)
+    for i in range(0, design_number_of_nodes):
+        DesignNodeList.append(DesignNode(design_ids[i], x_i[i], 0))
 
-rigid_body_settings = {
-    "translation": True,
-    "rotation": True,
-    "scaling": "shape"
-}
-Mapper = RigidBodyParameterization(DesignMesh, rigid_body_settings)
-StepSizeSettings = ConstStepInControl(1.0)
-ConvergenceSettings = MaxSteps(10)
+    DesignMesh = Mesh("design")
+    DesignMesh.AddNodes(DesignNodeList)
 
-OptimizationAlgorithm = SteepestDescentAlgorithm("Optimierung", Mapper, ConvergenceSettings, StepSizeSettings, NormalizeObjGrad=True)
-OptimizationAlgorithm.AddObjective(Response)
+    ## Optimization Set-Up
+    Response = TargetGeometryResponse("target", DesignMesh, TargetMesh)
 
-## Start Optimization
-OptimizationAlgorithm.StartOptimization()
-# print(OptimizationAlgorithm.Mapper.MappingMatrix)
-for i in range(len(OptimizationAlgorithm.PreviousControlFields)):
-    print(20*"-")
-    print("optimization step {}".format(i+1))
-    print("gradient {}".format(OptimizationAlgorithm.PreviousControlFields[i]["dg/dp"]))
-    print("control update {}".format(OptimizationAlgorithm.PreviousControlFields[i]["delta_p"]))
-    print("objective value {}".format(OptimizationAlgorithm.PreviousObjectiveValue[i]))
+    rigid_body_settings = {
+        "translation": True,
+        "rotation": True,
+        "scaling": scaling_type
+    }
+    Mapper = RigidBodyParameterization(DesignMesh, rigid_body_settings)
 
-print(40*"-")
-print("final objective value {}".format(OptimizationAlgorithm.PreviousObjectiveValue[-1]))
+    StepSizeSettings = ConstStepInUnscaledControl(0.5, Mapper)
+    # StepSizeSettings = ConstStepInControl(1.0)
 
-f = OptimizationAlgorithm.PreviousObjectiveValue
-## Plot
-fig, axis = plt.subplots(2, figsize=[5.0,8.0])
-axis[0].plot(x_j, p_j, '-*', color='lightgrey', label='target shape')
+    max_steps = 8
+    ConvergenceSettings = MaxSteps(max_steps)
 
-FinalShape = OptimizationAlgorithm.Mapper.Design
-axis[0].plot(FinalShape.GetNodeCoordinatesX(), FinalShape.GetShapeZ(), '-', label='design shape after {} iterations'.format(ConvergenceSettings.MaxSteps))
-axis[0].axis('equal')
-axis[0].legend()
+    OptimizationAlgorithm = SteepestDescentAlgorithm("Optimierung", Mapper, ConvergenceSettings, StepSizeSettings, NormalizeObjGrad=False)
+    OptimizationAlgorithm.AddObjective(Response)
 
-axis[1].plot(f)
-axis[1].set(xlabel="Step", ylabel="Objective")
+    ## Start Optimization
+    OptimizationAlgorithm.StartOptimization()
+    # print(OptimizationAlgorithm.Mapper.MappingMatrix)
+    for i in range(len(OptimizationAlgorithm.PreviousControlFields)):
+        print(20*"-")
+        print("optimization step {}".format(i+1))
+        print("gradient {}".format(OptimizationAlgorithm.PreviousControlFields[i]["dg/dp"]))
+        print("control update {}".format(OptimizationAlgorithm.PreviousControlFields[i]["delta_p"]))
+        print("objective value {}".format(OptimizationAlgorithm.PreviousObjectiveValue[i]))
+
+    print(40*"-")
+    print("final objective value {}".format(OptimizationAlgorithm.PreviousObjectiveValue[-1]))
+
+    f = OptimizationAlgorithm.PreviousObjectiveValue
+    print(int(Mapper.ControlSize))
+    translation = [0]
+    rotation = [0]
+    for i in range(max_steps):
+        translation.append(OptimizationAlgorithm.ControlParameter[2*i])
+        rotation.append(OptimizationAlgorithm.ControlParameter[2*i+1])
+
+    ax.plot(translation, rotation, f, label=scaling_type, marker='o')
+    ax.legend(title="scaling types")
+    # # Plot
+    # figure, axis = plt.subplots(2, figsize=[5.0,8.0])
+    # axis[0].plot(x_j, p_j, '-*', color='lightgrey', label='target shape')
+
+    # FinalShape = OptimizationAlgorithm.Mapper.Design
+    # axis[0].plot(FinalShape.GetNodeCoordinatesX(), FinalShape.GetShapeZ(), '-', label='design shape after {} iterations'.format(ConvergenceSettings.MaxSteps))
+    # axis[0].axis('equal')
+    # axis[0].legend()
+
+    # axis[1].plot(f)
+    # axis[1].set(xlabel="Step", ylabel="Objective")
+    # figure.show()
+
 plt.show()

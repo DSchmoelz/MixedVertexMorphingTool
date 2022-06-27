@@ -32,6 +32,8 @@ class SteepestDescentAlgorithm(object):
         self.PreviousControlFields = []
         self.PreviousObjectiveValue = []
 
+        self.ControlParameter = []
+
     def AddObjective(self, Response):
 
         self.Objectives[Response.Name] = Response
@@ -74,15 +76,30 @@ class SteepestDescentAlgorithm(object):
             self.ControlFields["dg/dp"] += mapped_gradients * weight
 
         if self.NormalizeObjGrad:
-            max_norm = np.max(abs(self.ControlFields["dg/dp"]))
-            self.ControlFields["dg/dp"] = (1/max_norm) * self.ControlFields["dg/dp"]
+            #max_norm = np.max(abs(self.ControlFields["dg/dp"]))
+            l2_norm = np.linalg.norm(self.ControlFields["dg/dp"])
+            self.ControlFields["dg/dp"] = (1/l2_norm) * self.ControlFields["dg/dp"]
 
     def _CalculateControlUpdate(self):
 
         control_gradients = self.ControlFields["dg/dp"]
         # delta_p = - alpha * dg/dp
-        control_update = - self.StepSize.StepSize * control_gradients
+        step_size = self.StepSize.ComputeStepSize(control_gradients)
+        print("step_size: {}".format(step_size))
+        control_update = - step_size * control_gradients
         self.ControlFields["delta_p"] = control_update
+
+        unscaled_control_update = np.zeros(self.Mapper.ControlSize)
+        unscaled_control_update = self.Mapper.GetUnscaledControlParameter(control_update)
+        print("unscaled_control_update: {}".format(unscaled_control_update))
+
+        for i in range(len(unscaled_control_update)):
+            if self.StepNumber == 1:
+                self.ControlParameter.append(unscaled_control_update[i])
+            else:
+                print(self.ControlParameter[-(len(unscaled_control_update)-i)])
+                control_parameter = self.ControlParameter[-len(unscaled_control_update)] + unscaled_control_update[i]
+                self.ControlParameter.append(control_parameter)
 
     def _MapControlUpdate(self):
 
