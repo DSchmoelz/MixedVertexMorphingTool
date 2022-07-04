@@ -5,7 +5,7 @@
 # Author: David Schmölz
 # david.schmoelz@tum.de
 #####################################################################
-# TestSteepestDescentAlgorithm
+# TestRigidBody
 #####################################################################
 
 import numpy as np
@@ -65,10 +65,10 @@ for scaling_type in scaling_types:
     }
     Mapper = RigidBodyParameterization(DesignMesh, rigid_body_settings)
 
-    StepSizeSettings = ConstStepInUnscaledControl(0.5, Mapper)
+    StepSizeSettings = ConstStepInUnscaledControl(0.05, Mapper)
     # StepSizeSettings = ConstStepInControl(1.0)
 
-    max_steps = 8
+    max_steps = 80
     ConvergenceSettings = MaxSteps(max_steps)
 
     OptimizationAlgorithm = SteepestDescentAlgorithm("Optimierung", Mapper, ConvergenceSettings, StepSizeSettings, NormalizeObjGrad=False)
@@ -95,7 +95,8 @@ for scaling_type in scaling_types:
         translation.append(OptimizationAlgorithm.ControlParameter[2*i])
         rotation.append(OptimizationAlgorithm.ControlParameter[2*i+1])
 
-    ax.plot(translation, rotation, f, label=scaling_type, marker='o')
+    ax.plot(translation, rotation, f, label=scaling_type)
+    # ax.plot(translation, rotation, f, label=scaling_type, marker='o')
     ax.legend(title="scaling types")
     # # Plot
     # figure, axis = plt.subplots(2, figsize=[5.0,8.0])

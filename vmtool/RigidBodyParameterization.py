@@ -5,7 +5,7 @@
 # Author: David Schmölz
 # david.schmoelz@tum.de
 #####################################################################
-# Mapping Matrix
+# Rigid Body Parameterization
 #####################################################################
 
 # external imports

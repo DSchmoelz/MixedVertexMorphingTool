@@ -71,9 +71,14 @@ ControlMesh.AddNodes(ControlNodeList)
 Response = TargetGeometryResponse("target", DesignMesh, TargetMesh)
 
 ## TODO: Mit Gaussian Integration Funktioniert Optimierung noch nicht!! Warum??
-Mapper = ForwardMapping.RiemannSum(DesignMesh, ControlMesh, filter_radius)
-StepSizeSettings = ConstStepInControl(1)
-ConvergenceSettings = MaxSteps(100)
+settings = {
+    "filter_radius": filter_radius,
+    "scaling": "pseudo_inv",
+    "integration": "RiemannSum"
+}
+Mapper = VertexMorphing(DesignMesh, ControlMesh, settings)
+StepSizeSettings = ConstStepInControl(0.2)
+ConvergenceSettings = MaxSteps(5)
 
 OptimizationAlgorithm = SteepestDescentAlgorithm("Optimierung", Mapper, ConvergenceSettings, StepSizeSettings)
 OptimizationAlgorithm.AddObjective(Response)

@@ -61,14 +61,24 @@ print("response value: {}".format(Response.Value))
 print("response gradients: {}".format(Response.Gradients))
 print(DesignMesh.GetNodeCoordinatesX())
 
-A = ForwardMapping.GaussianIntegration(DesignMesh, DesignMesh, filter_radius)
+settings_A = {
+    "filter_radius": filter_radius,
+    "integration": "RiemannSum",
+    "scaling": "none"
+}
+A = VertexMorphing(DesignMesh, DesignMesh, settings_A)
 A.Calculate()
 
-B = ForwardMapping.RiemannSum(DesignMesh, DesignMesh, filter_radius)
+settings_B = {
+    "filter_radius": filter_radius,
+    "integration": "GaussianQuadrature",
+    "scaling": "none"
+}
+B = VertexMorphing(DesignMesh, DesignMesh, settings_B)
 B.Calculate()
 
-mapped_gradients_a = A.MappingMatrix.transpose() @ Response.Gradients
-mapped_gradients_b = B.MappingMatrix.transpose() @ Response.Gradients
+mapped_gradients_a = A.MapGradient(Response.Gradients)
+mapped_gradients_b = B.MapGradient(Response.Gradients)
 
 print("mapped gradients Gaussian: {}".format(mapped_gradients_a))
 print("mapped gradients RiemannSum: {}".format(mapped_gradients_b))
@@ -79,7 +89,7 @@ delta_p_b = - step_size * mapped_gradients_b
 print("delta_p Gaussian: {}".format(delta_p_a))
 print("delta_p RiemannSum: {}".format(delta_p_b))
 
-delta_z_a = A.MappingMatrix @ delta_p_a
-delta_z_b = B.MappingMatrix @ delta_p_b
+delta_z_a = A.MapUpdate(delta_p_a)
+delta_z_b = B.MapUpdate(delta_p_b)
 print("delta_z Gaussian: {}".format(delta_z_a))
 print("delta_z RiemannSum: {}".format(delta_z_b))
