@@ -84,7 +84,8 @@ class SteepestDescentAlgorithm(object):
 
         control_gradients = self.ControlFields["dg/dp"]
         # delta_p = - alpha * dg/dp
-        step_size = self.StepSize.ComputeStepSize(control_gradients)
+        objective = list(self.Objectives.values())[0]
+        step_size = self.StepSize.ComputeStepSize(control_gradients, objective)
         print("step_size: {}".format(step_size))
         control_update = - step_size * control_gradients
         self.ControlFields["delta_p"] = control_update

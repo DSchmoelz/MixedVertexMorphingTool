@@ -31,6 +31,7 @@ class TargetGeometryResponse():
     def Calculate(self):
 
         self.Value = 0
+        self.Gradients = np.zeros(len(self.Design.Nodes))
 
         for design_node in self.Design.Nodes:
 

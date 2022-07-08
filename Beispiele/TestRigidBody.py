@@ -65,10 +65,11 @@ for scaling_type in scaling_types:
     }
     Mapper = RigidBodyParameterization(DesignMesh, rigid_body_settings)
 
-    StepSizeSettings = ConstStepInUnscaledControl(0.05, Mapper)
+    # StepSizeSettings = ConstStepInUnscaledControl(0.5, Mapper)
+    StepSizeSettings = GoldenSectionLineSearch(100.0, 1e-8, Mapper)
     # StepSizeSettings = ConstStepInControl(1.0)
 
-    max_steps = 80
+    max_steps = 6
     ConvergenceSettings = MaxSteps(max_steps)
 
     OptimizationAlgorithm = SteepestDescentAlgorithm("Optimierung", Mapper, ConvergenceSettings, StepSizeSettings, NormalizeObjGrad=False)
@@ -95,9 +96,10 @@ for scaling_type in scaling_types:
         translation.append(OptimizationAlgorithm.ControlParameter[2*i])
         rotation.append(OptimizationAlgorithm.ControlParameter[2*i+1])
 
-    ax.plot(translation, rotation, f, label=scaling_type)
-    # ax.plot(translation, rotation, f, label=scaling_type, marker='o')
+    # ax.plot(translation, rotation, f, label=scaling_type)
+    ax.plot(translation, rotation, f, label=scaling_type, marker='o')
     ax.legend(title="scaling types")
+
     # # Plot
     # figure, axis = plt.subplots(2, figsize=[5.0,8.0])
     # axis[0].plot(x_j, p_j, '-*', color='lightgrey', label='target shape')

@@ -64,6 +64,8 @@ class RigidBodyParameterization():
         else:
             ValueError("'scaling_type' unknown!")
 
+        # print("Scaling Matrix: {}".format(self.scaling_matrix))
+
     def MapGradient(self, gradient):
 
         if self.scaling_type == "none":
