@@ -36,7 +36,13 @@ class RigidBodyParameterization():
         if self.rotation is True:
             self.ControlSize += 1
 
-        self.Control = np.zeros(self.ControlSize)
+        self.center = None
+        print(settings)
+        if "center" in settings:
+            self.center = np.array(settings["center"])
+
+        print("self.center: {}".format(self.center))
+        self.Control = self.ControlSize
 
     def Calculate(self):
 
@@ -61,6 +67,21 @@ class RigidBodyParameterization():
             nodal_areas = self.Design.ComputeNodalAreas()
             mass_matrix = self.CalculateMassMatrix(nodal_areas, self.MappingMatrix)
             self.scaling_matrix = self.CalculateVariableScalingMatrix(mass_matrix)
+        elif self.scaling_type == "shape_diag_mass":
+            nodal_areas = self.Design.ComputeNodalAreas()
+            mass_matrix = self.CalculateDiagonalMassMatrix(nodal_areas, self.MappingMatrix)
+            print("Mass Matrix: {}".format(mass_matrix))
+            self.scaling_matrix = np.zeros((self.ControlSize, self.ControlSize))
+            np.fill_diagonal(self.scaling_matrix, np.sqrt(np.reciprocal(np.diag(mass_matrix))))
+            print("Scaling Matrix: {}".format(self.scaling_matrix))
+        elif self.scaling_type == "sens_shape":
+            nodal_areas = self.Design.ComputeNodalAreas()
+            mass_matrix = self.CalculateMassMatrix(nodal_areas, self.MappingMatrix)
+            self.scaling_matrix = np.linalg.inv(mass_matrix)
+        elif self.scaling_type == "sens_shape_diag_mass":
+            nodal_areas = self.Design.ComputeNodalAreas()
+            mass_matrix = self.CalculateDiagonalMassMatrix(nodal_areas, self.MappingMatrix)
+            self.scaling_matrix = np.linalg.inv(mass_matrix)
         else:
             ValueError("'scaling_type' unknown!")
 
@@ -70,25 +91,25 @@ class RigidBodyParameterization():
 
         if self.scaling_type == "none":
             mapped_gradient = self.MappingMatrix.transpose() @ gradient
-        elif self.scaling_type == "column" or self.scaling_type == "shape":
+        elif self.scaling_type in ["column", "shape", "shape_diag_mass", "sens_shape", "sens_shape_diag_mass"]:
             mapped_gradient = self.scaling_matrix.transpose() @ self.MappingMatrix.transpose() @ gradient
 
         return mapped_gradient
 
     def MapUpdate(self, control_update):
 
-        if self.scaling_type == "none":
+        if self.scaling_type in ["none", "sens_shape", "sens_shape_diag_mass"]:
             design_update = self.MappingMatrix @ control_update
-        elif self.scaling_type == "column" or self.scaling_type == "shape":
+        elif self.scaling_type in ["column", "shape", "shape_diag_mass"]:
             design_update = self.MappingMatrix @ self.scaling_matrix @ control_update
 
         return design_update
 
     def GetUnscaledControlParameter(self, control_update):
 
-        if self.scaling_type == "none":
+        if self.scaling_type in ["none", "sens_shape", "sens_shape_diag_mass"]:
             unscaled_control_update = control_update
-        elif self.scaling_type == "column" or self.scaling_type == "shape":
+        elif self.scaling_type in ["column", "shape", "shape_diag_mass"]:
             unscaled_control_update = self.scaling_matrix @ control_update
 
         return unscaled_control_update
@@ -111,6 +132,9 @@ class RigidBodyParameterization():
 
     def GetCenterOfGravity(self):
 
+        if self.center:
+            return self.center
+
         nodal_areas = self.Design.ComputeNodalAreas()
         node_coordinates = self.Design.GetNodeCoordinatesX()
 
@@ -125,9 +149,21 @@ class RigidBodyParameterization():
             for j in range(matrix.shape[1]):
                 M[i, j] = matrix[:, i] @ np.multiply(matrix[:, j], nodal_areas)
 
-        diagonal = M.diagonal()
-        if np.any(diagonal == 0.0):
-            M[diagonal == 0.0, diagonal == 0.0] = 1.0
+        # diagonal = M.diagonal()
+        # if np.any(diagonal == 0.0):
+        #     M[diagonal == 0.0, diagonal == 0.0] = 1.0
+
+        return M
+
+    @staticmethod
+    def CalculateDiagonalMassMatrix(nodal_areas, matrix):
+        M = np.zeros((matrix.shape[1], matrix.shape[1]))
+        for i in range(matrix.shape[1]):
+            M[i, i] = np.sum(np.multiply(abs(matrix[:, i]), nodal_areas))
+
+        # diagonal = M.diagonal()
+        # if np.any(diagonal == 0.0):
+        #     M[diagonal == 0.0, diagonal == 0.0] = 1.0
 
         return M
 

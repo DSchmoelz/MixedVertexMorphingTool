@@ -16,7 +16,7 @@ from .Mesh import Mesh
 
 class VertexMorphingRigidBodyParameterization():
 
-    def __init__(self, VertexMorphing, RigidBody, settings):
+    def __init__(self, VertexMorphing, RigidBody, settings, VertexMorphingBlending=None, RigidBodyBlending=None):
 
         """
         settings: {
@@ -28,6 +28,15 @@ class VertexMorphingRigidBodyParameterization():
         self.RigidBody = RigidBody
         self.VertexMorphing = VertexMorphing
         self.Design = RigidBody.Design
+        if RigidBodyBlending is None:
+            self.RigidBodyBlending = np.ones(len(self.Design.Nodes))
+        else:
+            self.RigidBodyBlending = RigidBodyBlending
+        if VertexMorphingBlending is None:
+            self.VertexMorphingBlending = np.ones(len(self.Design.Nodes))
+        else:
+            self.VertexMorphingBlending = VertexMorphingBlending
+
         # control is numpy array of parameter [Translation, Rotation]
         self.ControlSize = VertexMorphing.ControlSize + RigidBody.ControlSize
 
@@ -46,10 +55,17 @@ class VertexMorphingRigidBodyParameterization():
         self.MappingMatrix[:,
                            computed_parameters:computed_parameters+self.VertexMorphing.ControlSize] = self.VertexMorphing.MappingMatrix
 
+
+        self.MappingMatrix[:, computed_parameters:computed_parameters+self.VertexMorphing.ControlSize] *= self.VertexMorphingBlending[:, np.newaxis]
+
         computed_parameters += self.VertexMorphing.ControlSize
         self.RigidBody.Calculate()
+
         self.MappingMatrix[:,
                            computed_parameters:computed_parameters+self.RigidBody.ControlSize] = self.RigidBody.MappingMatrix
+
+        self.MappingMatrix[:,
+                           computed_parameters:computed_parameters+self.RigidBody.ControlSize] *= self.RigidBodyBlending[:, np.newaxis]
 
         self.scaling_matrix = np.eye(self.ControlSize)
 
@@ -87,8 +103,8 @@ class VertexMorphingRigidBodyParameterization():
             self.scaling_matrix[computed_parameters:computed_parameters+self.RigidBody.ControlSize,
                                 computed_parameters:computed_parameters+self.RigidBody.ControlSize] = self.RigidBody.scaling_matrix
 
-        # self.scaling_matrix = np.eye(self.ControlSize)
-        print("Scaling Matrix: {}".format(self.scaling_matrix))
+        # print("Scaling Matrix: {}".format(self.scaling_matrix))
+        # print("Mapping Matrix: {}".format(self.MappingMatrix))
 
         # exit()
         # print("Mapping Matrix: {}".format(self.MappingMatrix))

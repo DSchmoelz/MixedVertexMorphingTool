@@ -8,7 +8,6 @@
 # TestRigidBody
 #####################################################################
 
-from pyparsing import line
 import numpy as np
 import sys
 import path_setting
@@ -19,7 +18,7 @@ plt.style.use('seaborn')
 from RigidBodyObjectivePlot import create_objective_plot
 
 def target_geometry(x_j):
-    p_j = x_j / 2 + 4
+    p_j = x_j / 2 + 8
 
     return p_j
 
@@ -47,11 +46,12 @@ linestyles = ['solid', 'solid', 'solid', 'solid', (0, (5, 10)), (0, (5, 10))]
 style = dict(linewidth=1.0)
 
 obj_plot_settings = {
-    "translation_interval": [0, 8],
+    "center": -8,
+    "translation_interval": [-2, 8],
     "rotation_interval": [-0.4, 1.4]
 }
 fig, ax = create_objective_plot(obj_plot_settings, target_geometry)
-figure_2D, axis_2D = plt.subplots(2, 2, figsize=[6.0,16.0])
+figure_2D, axis_2D = plt.subplots(2, 2, figsize=[16.0,16.0])
 
 for scaling_type, color, marker, linestyle in zip(scaling_types, colors, markers, linestyles):
 
@@ -72,7 +72,8 @@ for scaling_type, color, marker, linestyle in zip(scaling_types, colors, markers
     rigid_body_settings = {
         "translation": True,
         "rotation": True,
-        "scaling": scaling_type
+        "scaling": scaling_type,
+        "center": -8
     }
     Mapper = RigidBodyParameterization(DesignMesh, rigid_body_settings)
 

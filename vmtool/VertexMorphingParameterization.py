@@ -130,9 +130,12 @@ class RiemannSum():
 
                 self.MappingMatrix[self.Design.GetNodeIndex(design_node.id), self.Control.GetNodeIndex(control_neighbour_node.id)] += weights[i]
 
-            max_sum_of_weights = max(max_sum_of_weights, sum_of_weights)
+            if abs(sum_of_weights) > 1e-16:
+                self.MappingMatrix[self.Design.GetNodeIndex(design_node.id), :] /= sum_of_weights
 
-        self.MappingMatrix /= max_sum_of_weights
+        #     max_sum_of_weights = max(max_sum_of_weights, sum_of_weights)
+
+        # self.MappingMatrix /= max_sum_of_weights
 
         # TODO: im ShapeModul wird sum_of_weigths verwendet, um Mapping Matrix zu skalieren.
         # Warum benötige ich hier max_sum_of_weights?

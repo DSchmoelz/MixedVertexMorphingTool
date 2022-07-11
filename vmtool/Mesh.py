@@ -51,7 +51,7 @@ class Mesh(object):
         # TODO: Funktion funktioniert derzeit nur für "ControlMeshes", da node.p verwendet wird und nicht node.z
         for node in self.Nodes:
             shape_function_lengths = self.GetNodeShapeFunctionLengths(node.id)
-            y += LinearNodeShapeFunction(x, node.x, shape_function_lengths[0], shape_function_lengths[1]) * node.p
+            y += LinearNodeShapeFunction(x, node.x, shape_function_lengths[0], shape_function_lengths[1]) * node.z
 
         return y
 
@@ -188,6 +188,27 @@ class Mesh(object):
         nodal_areas = np.zeros(len(self.Nodes))
 
         for node in self.Nodes:
+            # neighbours = self.GetNodeNeighbours(node.id)
+            # shape_function_lengths = self.GetNodeShapeFunctionLengths(node.id)
+
+        #     if len(neighbours) == 1 and neighbours[0].x > node.x:
+        #         delta_z = abs(neighbours[0].z - node.z)
+        #         delta_x = shape_function_lengths[1]
+        #         nodal_area_i = np.sqrt(delta_z**2 + delta_x**2)
+        #     elif len(neighbours) == 1 and neighbours[0].x < node.x:
+        #         delta_z = abs(node.z - neighbours[0].z)
+        #         delta_x = shape_function_lengths[0]
+        #         nodal_area_i = np.sqrt(delta_z**2 + delta_x**2)
+        #     else:
+        #         delta_z_0 = abs(node.z - neighbours[0].z)
+        #         delta_x_0 = shape_function_lengths[0]
+        #         delta_z_1 = abs(neighbours[1].z - node.z)
+        #         delta_x_1 = shape_function_lengths[1]
+        #         shape_function_lengths[1] = neighbours[1].x - node.x
+        #         shape_function_lengths[0] = node.x - neighbours[0].x
+
+
+        #     nodal_areas[self.GetNodeIndex(node.id)] = nodal_area_i
             nodal_areas[self.GetNodeIndex(node.id)] = np.sum(self.GetNodeShapeFunctionLengths(node.id))
 
         return nodal_areas
@@ -196,3 +217,19 @@ class Mesh(object):
 
         for node in self.Nodes:
             node.z += design_update[self.GetNodeIndex(node.id)]
+
+    def ComputeBlendingFunction(self, node_set, radius):
+
+        blending_function = np.zeros(len(self.Nodes))
+        for blending_node in node_set:
+            nodes_in_filter = self.GetNodeInFilterRadius(blending_node.x, radius, radius)
+            for node in nodes_in_filter:
+                # if node.id in node_id_set:
+                #     blending_value = 1
+                # else:
+                blending_value = LinearFilter(blending_node.x, node.x, radius)
+                index = self.GetNodeIndex(node.id)
+                if blending_value > blending_function[index]:
+                    blending_function[index] = blending_value
+
+        return blending_function

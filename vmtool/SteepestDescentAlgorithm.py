@@ -44,6 +44,7 @@ class SteepestDescentAlgorithm(object):
 
         while not self.Convergence.Converged:
             self.StepNumber += 1
+            print("Starting Optimization Step: {} of {}".format(self.StepNumber, self.Name))
             self._CalculateMapping()
             self._CalculateObjectives()
             self._MapObjectiveGradients()
@@ -86,19 +87,19 @@ class SteepestDescentAlgorithm(object):
         # delta_p = - alpha * dg/dp
         objective = list(self.Objectives.values())[0]
         step_size = self.StepSize.ComputeStepSize(control_gradients, objective)
-        print("step_size: {}".format(step_size))
+        # print("step_size: {}".format(step_size))
         control_update = - step_size * control_gradients
         self.ControlFields["delta_p"] = control_update
 
         unscaled_control_update = np.zeros(self.Mapper.ControlSize)
         unscaled_control_update = self.Mapper.GetUnscaledControlParameter(control_update)
-        print("unscaled_control_update: {}".format(unscaled_control_update))
+        # print("unscaled_control_update: {}".format(unscaled_control_update))
 
         for i in range(len(unscaled_control_update)):
             if self.StepNumber == 1:
                 self.ControlParameter.append(unscaled_control_update[i])
             else:
-                print(self.ControlParameter[-(len(unscaled_control_update)-i)])
+                # print(self.ControlParameter[-(len(unscaled_control_update)-i)])
                 control_parameter = self.ControlParameter[-len(unscaled_control_update)] + unscaled_control_update[i]
                 self.ControlParameter.append(control_parameter)
 

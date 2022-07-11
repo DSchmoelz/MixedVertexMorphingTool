@@ -17,12 +17,12 @@ import matplotlib.pyplot as plt
 from matplotlib import cm
 
 
-def create_objective_plot():
+def create_objective_plot(settings, target_geometry):
 
-    def target_geometry(x_j):
-        p_j = x_j / 2 + 4
+    # def target_geometry(x_j):
+    #     p_j = x_j / 2 + 4
 
-        return p_j
+    #     return p_j
 
     def create_design():
         ## Design Geometry
@@ -57,15 +57,27 @@ def create_objective_plot():
     TargetMesh = Mesh("target")
     TargetMesh.AddNodes(TargetNodeList)
 
-    rigid_body_settings = {
-        "translation": True,
-        "rotation": True,
-        "scaling": "none"
-    }
+    if "center" in settings:
+        rigid_body_settings = {
+            "translation": True,
+            "rotation": True,
+            "scaling": "none",
+            "center": settings["center"]
+        }
+    else:
+        rigid_body_settings = {
+            "translation": True,
+            "rotation": True,
+            "scaling": "none"
+        }
     Mapper = RigidBodyParameterization("dummy", rigid_body_settings)
 
-    translation = np.linspace(0, 8)
-    rotation = np.linspace(-0.4, 1.4)
+    t_min = settings["translation_interval"][0]
+    t_max = settings["translation_interval"][1]
+    translation = np.linspace(t_min, t_max)
+    r_min = settings["rotation_interval"][0]
+    r_max = settings["rotation_interval"][1]
+    rotation = np.linspace(r_min, r_max)
     translation, rotation = np.meshgrid(translation, rotation)
 
     def CalculateObjective(t, r, Mapper):

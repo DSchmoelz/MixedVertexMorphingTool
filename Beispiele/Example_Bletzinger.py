@@ -54,20 +54,30 @@ plt.figure()
 plt.plot(x_j, p_j, '-*', color='lightgrey', label='control polygon')
 
 # Method A with Gaussian Integration
-A = ForwardMapping.GaussianIntegration(DesignMesh, ControlMesh, filter_radius)
+settings_A = {
+    "filter_radius": filter_radius,
+    "integration": "GaussianQuadrature",
+    "scaling": "none"
+}
+A = VertexMorphingParameterization.VertexMorphing(DesignMesh, ControlMesh, settings_A)
 A.Calculate()
 
-z_i_A = A.MappingMatrix @ p_j
+z_i_A = A.MapUpdate(p_j)
 
-plt.plot(x_i, z_i_A, '-', label='design shape A, r = {}'.format(filter_radius))
+plt.plot(x_i, z_i_A, '-', label='design shape Gaussian quadrature, r = {}'.format(filter_radius))
 
 # Method B with Riemann sum
-B = ForwardMapping.RiemannSum(DesignMesh, ControlMesh, filter_radius)
+settings_B = {
+    "filter_radius": filter_radius,
+    "integration": "RiemannSum",
+    "scaling": "none"
+}
+B = VertexMorphingParameterization.VertexMorphing(DesignMesh, ControlMesh, settings_B)
 B.Calculate()
 
-z_i_B = B.MappingMatrix @ p_j
+z_i_B = B.MapUpdate(p_j)
 
-plt.plot(x_i, z_i_B, '-', label='design shape B, r = {}'.format(filter_radius))
+plt.plot(x_i, z_i_B, '-', label='design shape Riemann sum, r = {}'.format(filter_radius))
 
 plt.legend()
 plt.show()
