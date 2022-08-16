@@ -49,23 +49,23 @@ class VertexMorphingRigidBodyParameterization():
         self.MappingMatrix = np.zeros([len(self.Design.Nodes),
                                        self.ControlSize])
 
-        self.VertexMorphing.Calculate()
+        self.VertexMorphing.Calculate(self.VertexMorphingBlending)
 
         computed_parameters = 0
         self.MappingMatrix[:,
                            computed_parameters:computed_parameters+self.VertexMorphing.ControlSize] = self.VertexMorphing.MappingMatrix
 
 
-        self.MappingMatrix[:, computed_parameters:computed_parameters+self.VertexMorphing.ControlSize] *= self.VertexMorphingBlending[:, np.newaxis]
+        # self.MappingMatrix[:, computed_parameters:computed_parameters+self.VertexMorphing.ControlSize] *= self.VertexMorphingBlending[:, np.newaxis]
 
         computed_parameters += self.VertexMorphing.ControlSize
-        self.RigidBody.Calculate()
+        self.RigidBody.Calculate(self.RigidBodyBlending)
 
         self.MappingMatrix[:,
                            computed_parameters:computed_parameters+self.RigidBody.ControlSize] = self.RigidBody.MappingMatrix
 
-        self.MappingMatrix[:,
-                           computed_parameters:computed_parameters+self.RigidBody.ControlSize] *= self.RigidBodyBlending[:, np.newaxis]
+        # self.MappingMatrix[:,
+        #                    computed_parameters:computed_parameters+self.RigidBody.ControlSize] *= self.RigidBodyBlending[:, np.newaxis]
 
         self.scaling_matrix = np.eye(self.ControlSize)
 
@@ -171,9 +171,9 @@ class VertexMorphingRigidBodyParameterization():
             for j in range(matrix_b.shape[1]):
                 M[i, j] = matrix_a[:, i] @ np.multiply(matrix_b[:, j], nodal_areas)
 
-        diagonal = M.diagonal()
-        if np.any(diagonal == 0.0):
-            M[diagonal == 0.0, diagonal == 0.0] = 1.0
+        # diagonal = M.diagonal()
+        # if np.any(diagonal == 0.0):
+        #     M[diagonal == 0.0, diagonal == 0.0] = 1.0
 
         return M
 

@@ -16,7 +16,7 @@ class Convergence(object):
     def __init__(self):
         self.Converged = False
 
-    def CheckIfConverged(self):
+    def CheckIfConverged(self, ObjectiveValue, StepNumber):
         pass
 
 class MaxSteps(Convergence):
@@ -26,6 +26,21 @@ class MaxSteps(Convergence):
         super().__init__()
         self.MaxSteps = MaxAmountOfSteps
 
-    def CheckIfConverged(self, StepNumber):
+    def CheckIfConverged(self, ObjectiveValue, StepNumber):
         if StepNumber >= self.MaxSteps:
+            self.Converged = True
+
+class ObjectiveValue(Convergence):
+
+    def __init__(self, ObjectiveValue, MaxAmountOfSteps):
+
+        super().__init__()
+        self.ObjectiveValue = ObjectiveValue
+        self.MaxSteps = MaxAmountOfSteps
+
+    def CheckIfConverged(self, ObjectiveValue, StepNumber):
+
+        if ObjectiveValue <= self.ObjectiveValue:
+            self.Converged = True
+        elif StepNumber >= self.MaxSteps:
             self.Converged = True

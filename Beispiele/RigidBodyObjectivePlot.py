@@ -91,8 +91,7 @@ def create_objective_plot(settings, target_geometry):
 
     vfunc = np.vectorize(CalculateObjective)
     f = vfunc(translation, rotation, Mapper)
-    fig, ax = plt.subplots(subplot_kw={"projection": "3d"})
-
+    fig, ax = plt.subplots(subplot_kw={"projection": "3d"}, figsize=settings["figsize"])
 
     ax.plot_surface(translation, rotation, f, cmap=cm.coolwarm,
                         linewidth=0, antialiased=False, alpha=0.5)

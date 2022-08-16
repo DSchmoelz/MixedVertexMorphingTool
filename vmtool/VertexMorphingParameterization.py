@@ -170,9 +170,11 @@ class VertexMorphing():
         else:
             ValueError("'scaling_type' unknown!")
 
-    def Calculate(self):
+    def Calculate(self, blending=None):
 
         self.MappingMatrix = self.IntegrationMethod.CalculateMappingMatrix()
+        if blending is not None:
+            self.MappingMatrix *= blending[:, np.newaxis]
 
         if self.scaling_type == "none" or self.scaling_type == "pseudo_inv":
             self.scaling_matrix = np.eye(self.ControlSize)

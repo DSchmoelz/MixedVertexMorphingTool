@@ -51,7 +51,12 @@ class SteepestDescentAlgorithm(object):
             self._CalculateControlUpdate()
             self._MapControlUpdate()
             self._UpdateDesign()
-            self.Convergence.CheckIfConverged(self.StepNumber)
+            ### TODO: fix hacky code
+            for objective in self.Objectives.values():
+                objective.Calculate()
+                objective_value = objective.Value
+            ###
+            self.Convergence.CheckIfConverged(objective_value, self.StepNumber)
 
         # Finalisierung
         self._CalculateObjectives()
@@ -87,7 +92,7 @@ class SteepestDescentAlgorithm(object):
         # delta_p = - alpha * dg/dp
         objective = list(self.Objectives.values())[0]
         step_size = self.StepSize.ComputeStepSize(control_gradients, objective)
-        # print("step_size: {}".format(step_size))
+        print("step_size: {}".format(step_size))
         control_update = - step_size * control_gradients
         self.ControlFields["delta_p"] = control_update
 
@@ -113,10 +118,13 @@ class SteepestDescentAlgorithm(object):
         # save old geometry in old mapper
         # self.OldMapperList.append(self.Mapper)
         # save old design and control fields
-        self.PreviousDesignFields.append(self.DesignFields.copy())
+
         self.PreviousControlFields.append(self.ControlFields.copy())
 
         design_update = self.DesignFields["delta_z"]
+        self.DesignFields["x"] = self.Mapper.Design.GetNodeCoordinatesX()
+        self.DesignFields["z"] = self.Mapper.Design.GetShapeZ()
+        self.PreviousDesignFields.append(self.DesignFields.copy())
         self.Mapper.Design.UpdateDesignVariables(design_update)
 
     ## TODO: Plotten/Animieren der Ergebnisse. Ausserhalb des OptimierungsAlgorithmus?!

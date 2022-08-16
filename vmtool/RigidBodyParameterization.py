@@ -37,14 +37,12 @@ class RigidBodyParameterization():
             self.ControlSize += 1
 
         self.center = None
-        print(settings)
         if "center" in settings:
             self.center = np.array(settings["center"])
 
-        print("self.center: {}".format(self.center))
         self.Control = self.ControlSize
 
-    def Calculate(self):
+    def Calculate(self, blending=None):
 
         self.MappingMatrix = np.zeros([len(self.Design.Nodes),
                                        self.ControlSize])
@@ -55,6 +53,9 @@ class RigidBodyParameterization():
             computed_parameters += 1
         if self.rotation:
             self.MappingMatrix[:, computed_parameters:computed_parameters+1] = self.ComputeRotationMapping()
+
+        if blending is not None:
+            self.MappingMatrix *= blending[:, np.newaxis]
 
         if self.scaling_type == "none":
             self.scaling_matrix = np.eye(self.ControlSize)
