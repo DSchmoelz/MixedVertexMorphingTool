@@ -15,9 +15,9 @@ sys.path.append(path_setting.path)
 from vmtool import *
 import matplotlib.pyplot as plt
 
-control_number_of_nodes = 17
-p_j = np.array([1, 0.7, 2, -1.2, -2.2, -1, 0.4, 1.35, 1.3, 1.25, 1.2, 1.15, 1.1, 1.05, 1, -1, -1])
-x_j = np.linspace(0, 16, control_number_of_nodes)
+p_j = np.array([1, 0.95, 0.9, 0.85, 0.8, 0.75, 0.7, 2, -1.2, -2.2, -1, 0.4, 1.35, 1.3, 1.25, 1.2, 1.15, 1.1, 1.05, 1, -1, -1, -1, -1])
+control_number_of_nodes = len(p_j)
+x_j = np.linspace(0, control_number_of_nodes-1, control_number_of_nodes)
 
 ControlNodeList = []
 control_ids = np.arange(control_number_of_nodes)
@@ -29,7 +29,7 @@ ControlMesh.AddNodes(ControlNodeList)
 
 
 design_number_of_nodes = (control_number_of_nodes-1)*1 + 1
-x_i = np.linspace(0, 16, design_number_of_nodes)
+x_i = np.linspace(0, control_number_of_nodes-1, design_number_of_nodes)
 
 DesignNodeList = []
 design_ids = np.arange(design_number_of_nodes)
@@ -42,11 +42,17 @@ DesignMesh.AddNodes(DesignNodeList)
 plt.figure()
 plt.plot(x_j, p_j, '-*', color='lightgrey', label='control polygon')
 
-filter_radius = 4
+filter_radius = 11
 
-A = ForwardMapping.GaussianIntegration(DesignMesh, ControlMesh, filter_radius)
-A.CalculateVaryingFilter()
-z_i_A = A.MappingMatrix.dot(p_j)
+# Method A with Riemann sum
+settings_A = {
+    "filter_radius": filter_radius,
+    "integration": "RiemannSum",
+    "scaling": "none"
+}
+A = VertexMorphingParameterization.VertexMorphing(DesignMesh, ControlMesh, settings_A)
+A.Calculate()
+z_i_A = A.MapUpdate(p_j)
 print(A.MappingMatrix)
 plt.plot(x_i, z_i_A, '-', label='design shape A, r = {}'.format(filter_radius))
 

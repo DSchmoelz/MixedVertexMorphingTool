@@ -178,7 +178,7 @@ class Mesh(object):
         nodes_in_filter = []
 
         for node in self.Nodes:
-            if node.x >= x_i - r_left and node.x <= x_i + r_right:
+            if node.x > x_i - r_left and node.x < x_i + r_right:
                 nodes_in_filter.append(node)
 
         return nodes_in_filter
