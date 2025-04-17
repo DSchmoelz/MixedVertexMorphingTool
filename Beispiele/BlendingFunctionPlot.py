@@ -16,7 +16,7 @@ sys.path.append(path_setting.path)
 from vmtool import *
 import matplotlib.pyplot as plt
 from matplotlib.ticker import MaxNLocator
-plt.style.use('seaborn')
+plt.style.use('seaborn-v0_8-paper')
 SMALL_SIZE = 8
 MEDIUM_SIZE = 10
 BIGGER_SIZE = 12

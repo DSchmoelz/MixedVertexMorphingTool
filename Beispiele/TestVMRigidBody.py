@@ -74,17 +74,17 @@ TargetMesh.AddNodes(TargetNodeList)
 # linestyles = ['solid', 'solid', 'solid']
 
 # Paper scaling types
-# scaling_types =["none",  "shape_diag", "shape", "shape_w_off"]
-# colors = ['gray', "#a2ad00", 'red', 'orange']
-# markers = ['X', '2', 'o', 's']
-# number_of_plots = [4, 4, 4, 2]
-# linestyles = ['solid', 'solid', 'solid', 'solid']
+scaling_types =["none",  "shape_diag", "shape", "shape_w_off"]
+colors = ['gray', "#a2ad00", 'red', 'orange']
+markers = ['X', '2', 'o', 's']
+number_of_plots = [4, 4, 4, 2]
+linestyles = ['solid', 'solid', 'solid', 'solid']
 
-scaling_types =["shape_diag", "shape", "shape_w_off"]
-colors = ["#a2ad00", 'red', 'orange']
-markers = ['2', 'o', 's']
-number_of_plots = [4, 4, 2]
-linestyles = ['solid', 'solid', 'solid']
+# scaling_types =["shape_diag", "shape", "shape_w_off"]
+# colors = ["#a2ad00", 'red', 'orange']
+# markers = ['2', 'o', 's']
+# number_of_plots = [4, 4, 2]
+# linestyles = ['solid', 'solid', 'solid']
 
 style = dict(linewidth=1.0)
 figure_2D, axis_2D = plt.subplots(2, 2, figsize=[12.0,8.0])
@@ -166,15 +166,16 @@ for scaling_type, color, marker, linestyle, plot_number in zip(scaling_types, co
     #     scaling_type = "shape"
     Parameterization = VertexMorphingRigidBodyParameterization(VM_param, RB_param, settings, VertexMorphingBlending=vm_blending_function)
 
+    # TODO: figure out good line search settings
     step_size = 0.1
-    max_step_size = 5
-    line_search_tolerance = 1e-6
+    max_step_size = 0.21
+    line_search_tolerance = 1e-3
     # StepSizeSettings = ConstStepInUnscaledControl(0.5, Parameterization)
     # StepSizeSettings = ConstStepInControl(step_size)
-    if scaling_type == "none":
-        StepSizeSettings = GoldenSectionLineSearch(0.21, line_search_tolerance, Parameterization)
-    else:
-        StepSizeSettings = GoldenSectionLineSearch(max_step_size, line_search_tolerance, Parameterization)
+    # if scaling_type == "none":
+    #     StepSizeSettings = GoldenSectionLineSearch(1, line_search_tolerance, Parameterization)
+    # else:
+    StepSizeSettings = GoldenSectionLineSearch(max_step_size, line_search_tolerance, Parameterization)
 
     max_steps = 10000
     objective_value = 1e-2
