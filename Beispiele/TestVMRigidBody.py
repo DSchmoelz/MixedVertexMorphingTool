@@ -16,7 +16,7 @@ from vmtool import *
 import matplotlib
 import matplotlib.pyplot as plt
 from matplotlib.ticker import MaxNLocator
-plt.style.use('seaborn')
+plt.style.use('seaborn-v0_8-paper')
 SMALL_SIZE = 8
 MEDIUM_SIZE = 10
 BIGGER_SIZE = 12
@@ -67,17 +67,24 @@ for i in range(0, number_of_nodes):
 TargetMesh = Mesh("target")
 TargetMesh.AddNodes(TargetNodeList)
 
-# scaling_types =["none", "shape_sub", "shape_off"]
+# scaling_types =["none", "shape", "shape_w_off"]
 # colors = ['gray', 'red', 'orange']
 # markers = ['X', 'o', 's']
 # number_of_plots = [4, 4, 2]
 # linestyles = ['solid', 'solid', 'solid']
 
-scaling_types =["shape_off"]
-colors = ['orange']
-markers = ['s']
-number_of_plots = [2]
-linestyles = ['solid']
+# Paper scaling types
+scaling_types =["none",  "shape_diag", "shape", "shape_w_off"]
+colors = ['gray', "#a2ad00", 'red', 'orange']
+markers = ['X', '2', 'o', 's']
+number_of_plots = [4, 4, 4, 2]
+linestyles = ['solid', 'solid', 'solid', 'solid']
+
+# scaling_types =["shape_diag", "shape", "shape_w_off"]
+# colors = ["#a2ad00", 'red', 'orange']
+# markers = ['2', 'o', 's']
+# number_of_plots = [4, 4, 2]
+# linestyles = ['solid', 'solid', 'solid']
 
 style = dict(linewidth=1.0)
 figure_2D, axis_2D = plt.subplots(2, 2, figsize=[12.0,8.0])
@@ -129,7 +136,7 @@ for scaling_type, color, marker, linestyle, plot_number in zip(scaling_types, co
     ## Optimization Set-Up
     Response = TargetGeometryResponse("target", DesignMesh, TargetMesh)
 
-    if scaling_type in ["shape_sub"]:
+    if scaling_type in ["shape", "shape_diag"]:
         scaling_sub = "shape"
     else:
         scaling_sub = "none"
@@ -142,6 +149,8 @@ for scaling_type, color, marker, linestyle, plot_number in zip(scaling_types, co
     VM_param = VertexMorphing(DesignMesh, ControlMesh, vm_settings)
 
     ## Rigid Body Parameterization
+    if scaling_type in ["shape_diag"]:
+        scaling_sub = "shape_diag_mass"
     rigid_body_settings = {
         "translation": True,
         "rotation": True,
@@ -153,26 +162,28 @@ for scaling_type, color, marker, linestyle, plot_number in zip(scaling_types, co
     settings = {
             "scaling": scaling_type
         }
-    if scaling_type == "shape_sub":
-        scaling_type = "shape"
+    # if scaling_type == "shape_sub":
+    #     scaling_type = "shape"
     Parameterization = VertexMorphingRigidBodyParameterization(VM_param, RB_param, settings, VertexMorphingBlending=vm_blending_function)
 
+    # TODO: figure out good line search settings
     step_size = 0.1
-    max_step_size = 5
+    max_step_size = 0.21
     line_search_tolerance = 1e-3
     # StepSizeSettings = ConstStepInUnscaledControl(0.5, Parameterization)
     # StepSizeSettings = ConstStepInControl(step_size)
-    if scaling_type == "none":
-        StepSizeSettings = GoldenSectionLineSearch(0.21, line_search_tolerance, Parameterization)
-    else:
-        StepSizeSettings = GoldenSectionLineSearch(max_step_size, line_search_tolerance, Parameterization)
+    # if scaling_type == "none":
+    #     StepSizeSettings = GoldenSectionLineSearch(1, line_search_tolerance, Parameterization)
+    # else:
+    StepSizeSettings = GoldenSectionLineSearch(max_step_size, line_search_tolerance, Parameterization)
 
-    max_steps = 1
+    max_steps = 10000
     objective_value = 1e-2
     # ConvergenceSettings = MaxSteps(max_steps)
     ConvergenceSettings = ObjectiveValue(objective_value, max_steps)
 
-    OptimizationAlgorithm = SteepestDescentAlgorithm("Optimization with scaling type '{}'".format(scaling_type), Parameterization, ConvergenceSettings, StepSizeSettings, NormalizeObjGrad=False)
+    history_folder = f"history_scaling_{scaling_type}"
+    OptimizationAlgorithm = SteepestDescentAlgorithm("Optimization with scaling type '{}'".format(scaling_type), Parameterization, ConvergenceSettings, StepSizeSettings, NormalizeObjGrad=False, HistoryFolder=history_folder)
     OptimizationAlgorithm.AddObjective(Response)
 
     ## Start Optimization
@@ -182,8 +193,8 @@ for scaling_type, color, marker, linestyle, plot_number in zip(scaling_types, co
     translation = [0]
     rotation = [0]
     for i in range(len(OptimizationAlgorithm.PreviousControlFields)):
-        print(20*"-")
-        print("optimization step {}".format(i+1))
+        # print(20*"-")
+        # print("optimization step {}".format(i+1))
         # print("gradient {}".format(OptimizationAlgorithm.PreviousControlFields[i]["dg/dp"]))
         # print("control update {}".format(OptimizationAlgorithm.PreviousControlFields[i]["delta_p"]))
         control_size = len(OptimizationAlgorithm.PreviousControlFields[i]["delta_p"])
@@ -191,14 +202,14 @@ for scaling_type, color, marker, linestyle, plot_number in zip(scaling_types, co
         translation.append(p[-2])
         rotation.append(p[-1])
         # print("control values {}".format(p))
-        print("objective value {}".format(OptimizationAlgorithm.PreviousObjectiveValue[i]))
+        # print("objective value {}".format(OptimizationAlgorithm.PreviousObjectiveValue[i]))
 
-    print(40*"-")
-    print("final objective value {}".format(OptimizationAlgorithm.PreviousObjectiveValue[-1]))
+    # print(40*"-")
+    # print("final objective value {}".format(OptimizationAlgorithm.PreviousObjectiveValue[-1]))
 
     f = OptimizationAlgorithm.PreviousObjectiveValue
 
-    final_step = OptimizationAlgorithm.StepNumber
+    final_step = OptimizationAlgorithm.StepNumber-1
 
     axis_2D[0,1].plot(translation, color=color, label=scaling_type, linestyle=linestyle, **style)
     axis_2D[0,1].scatter(final_step, translation[-1], color=color, marker=marker)

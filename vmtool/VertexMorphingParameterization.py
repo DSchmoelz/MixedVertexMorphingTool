@@ -106,6 +106,8 @@ class RiemannSum():
 
         self.ControlSize = len(self.Control.Nodes)
 
+        self.domain_edges = [self.Design.Nodes[0].x, self.Design.Nodes[-1].x]
+
     def CalculateMappingMatrix(self):
 
         nodal_areas = self.Control.ComputeNodalAreas()
@@ -125,6 +127,7 @@ class RiemannSum():
                 nodal_area_i = nodal_areas[neighbour_nodes_index]
 
                 weight = nodal_area_i * LinearFilter(control_neighbour_node.x, design_node.x, self.FilterRadius)
+                # weight = nodal_area_i * VaryingLinearFunction(control_neighbour_node.x, design_node.x, self.FilterRadius, self.domain_edges)
                 weights[i] = weight
                 sum_of_weights += weight
 
@@ -181,7 +184,7 @@ class VertexMorphing():
         elif self.scaling_type == "shape":
             nodal_areas = self.Design.ComputeNodalAreas()
             mass_matrix = self.CalculateDiagonalMassMatrix(nodal_areas, self.MappingMatrix)
-            self.scaling_matrix = self.CalculateVariableScalingMatrix(mass_matrix)
+            self.scaling_matrix = self.CalculateDiagonalVariableScalingMatrix(mass_matrix)
         elif self.scaling_type == "shape_non_diag":
             nodal_areas = self.Design.ComputeNodalAreas()
             mass_matrix = self.CalculateMassMatrix(nodal_areas, self.MappingMatrix)
@@ -228,6 +231,11 @@ class VertexMorphing():
         if np.any(diagonal == 0.0):
             M[diagonal == 0.0, diagonal == 0.0] = 1.0
 
+        # TODO: find suitable tolerance
+        # set all entries < 1e-8 to 0
+        bad_indices = abs(M) < 1e-8
+        M[bad_indices] = 0
+
         return M
 
     @staticmethod
@@ -240,6 +248,11 @@ class VertexMorphing():
         diagonal = M.diagonal()
         if np.any(diagonal == 0.0):
             M[diagonal == 0.0, diagonal == 0.0] = 1.0
+
+        # TODO: find suitable tolerance
+        # set all entries < 1e-8 to 0
+        bad_indices = abs(M) < 1e-8
+        M[bad_indices] = 0
 
         return M
 
@@ -256,3 +269,13 @@ class VertexMorphing():
         D = np.diag(eigvals)
 
         return P @ np.sqrt(D)  # this is applied to update and the transpose to gradients
+
+    @staticmethod
+    def CalculateDiagonalVariableScalingMatrix(mass_matrix):
+
+        S = np.zeros(mass_matrix.shape)
+
+        for i in range(mass_matrix.shape[0]):
+            S[i,i] = np.sqrt((1/mass_matrix[i,i]))
+
+        return S  # this is applied to update and the transpose to gradients

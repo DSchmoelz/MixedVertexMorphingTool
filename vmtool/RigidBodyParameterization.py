@@ -71,10 +71,8 @@ class RigidBodyParameterization():
         elif self.scaling_type == "shape_diag_mass":
             nodal_areas = self.Design.ComputeNodalAreas()
             mass_matrix = self.CalculateDiagonalMassMatrix(nodal_areas, self.MappingMatrix)
-            print("Mass Matrix: {}".format(mass_matrix))
             self.scaling_matrix = np.zeros((self.ControlSize, self.ControlSize))
             np.fill_diagonal(self.scaling_matrix, np.sqrt(np.reciprocal(np.diag(mass_matrix))))
-            print("Scaling Matrix: {}".format(self.scaling_matrix))
         elif self.scaling_type == "sens_shape":
             nodal_areas = self.Design.ComputeNodalAreas()
             mass_matrix = self.CalculateMassMatrix(nodal_areas, self.MappingMatrix)

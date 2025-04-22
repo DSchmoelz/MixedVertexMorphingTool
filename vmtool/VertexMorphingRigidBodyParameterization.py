@@ -69,7 +69,7 @@ class VertexMorphingRigidBodyParameterization():
 
         self.scaling_matrix = np.eye(self.ControlSize)
 
-        if self.scaling_type == "shape" or self.scaling_type == "shape_off":
+        if self.scaling_type == "shape_w_off":
             nodal_areas = self.Design.ComputeNodalAreas()
             mass_matrix = np.zeros((self.ControlSize, self.ControlSize))
             computed_parameters = 0
@@ -77,7 +77,7 @@ class VertexMorphingRigidBodyParameterization():
                                 computed_parameters:computed_parameters+self.VertexMorphing.ControlSize] = self.VertexMorphing.CalculateDiagonalMassMatrix(nodal_areas, self.VertexMorphing.MappingMatrix)
             computed_parameters += self.VertexMorphing.ControlSize
 
-            if self.scaling_type == "shape_off":
+            if self.scaling_type == "shape_w_off":
                 mass_matrix_off_diag = self.CalculateMassMatrixOffDiagonal(nodal_areas, self.VertexMorphing.MappingMatrix, self.RigidBody.MappingMatrix)
                 mass_matrix[0:self.VertexMorphing.ControlSize,
                             computed_parameters:computed_parameters+self.RigidBody.ControlSize] = mass_matrix_off_diag
@@ -92,7 +92,7 @@ class VertexMorphingRigidBodyParameterization():
 
             self.scaling_matrix = self.CalculateVariableScalingMatrix(mass_matrix)
 
-        elif self.scaling_type == "shape_sub":
+        elif self.scaling_type in ["shape", "shape_diag"]:
             self.scaling_matrix = np.zeros((self.ControlSize, self.ControlSize))
             computed_parameters = 0
             self.scaling_matrix[computed_parameters:computed_parameters+self.VertexMorphing.ControlSize,
@@ -128,7 +128,7 @@ class VertexMorphingRigidBodyParameterization():
 
         if self.scaling_type == "none":
             mapped_gradient = self.MappingMatrix.transpose() @ gradient
-        elif self.scaling_type == "column" or self.scaling_type in ["shape", "shape_sub", "shape_off"]:
+        elif self.scaling_type == "column" or self.scaling_type in ["shape", "shape_diag", "shape_w_off"]:
             mapped_gradient = self.scaling_matrix.transpose() @ self.MappingMatrix.transpose() @ gradient
         elif self.scaling_type == "pseudo_inv":
             mapped_gradient = np.linalg.pinv(self.MappingMatrix @ self.scaling_matrix) @ gradient
@@ -139,7 +139,7 @@ class VertexMorphingRigidBodyParameterization():
 
         if self.scaling_type == "none":
             design_update = self.MappingMatrix @ control_update
-        elif self.scaling_type == "column" or self.scaling_type in ["shape", "shape_sub", "shape_off"]:
+        elif self.scaling_type == "column" or self.scaling_type in ["shape", "shape_diag", "shape_w_off"]:
             design_update = self.MappingMatrix @ self.scaling_matrix @ control_update
         elif self.scaling_type == "pseudo_inv":
             design_update = self.MappingMatrix @ (self.scaling_matrix @ control_update)
@@ -150,7 +150,7 @@ class VertexMorphingRigidBodyParameterization():
 
         if self.scaling_type == "none" or self.scaling_type == "pseudo_inv":
             unscaled_control_update = control_update
-        elif self.scaling_type == "column" or self.scaling_type in ["shape", "shape_sub", "shape_off"]:
+        elif self.scaling_type == "column" or self.scaling_type in ["shape", "shape_diag", "shape_w_off"]:
             unscaled_control_update = self.scaling_matrix @ control_update
 
         return unscaled_control_update

@@ -26,12 +26,10 @@ def LinearHatFunction(zeta, zeta_i, n):
 
 def LinearFilter(zeta, zeta_i, n):
 
-    if (zeta_i-n) <= zeta and zeta <= zeta_i:
-        N = 1 + (zeta-zeta_i) / n
+    distance = abs(zeta-zeta_i)
 
-    elif zeta_i <= zeta and zeta <= (zeta_i+n):
-        N = 1 - (zeta-zeta_i) / n
-
+    if distance < n:
+        N = 1 - distance / n
     else:
         N = 0
 
@@ -47,6 +45,72 @@ def LinearNodeShapeFunction(zeta, zeta_i, r_left, r_right):
 
     else:
         N = 0
+
+    return N
+
+def VaryingLinearFunction(zeta, zeta_i, r, DomainEdges):
+
+    left_edge = DomainEdges[0]
+    right_edge = DomainEdges[1]
+
+    distance_to_edges = min(zeta_i - left_edge, right_edge - zeta_i)
+
+    if zeta_i == zeta:
+        N = 1
+
+    elif distance_to_edges < r:
+        reduced_radius = distance_to_edges
+        N = LinearFilter(zeta, zeta_i, reduced_radius)
+
+    else:
+        N = LinearFilter(zeta, zeta_i, r)
+
+    return N
+
+def VaryingLinearFunctionv2(zeta, zeta_i, r, DomainEdges):
+
+    left_edge = DomainEdges[0]
+    right_edge = DomainEdges[1]
+
+    if zeta_i == zeta:
+        N = 1
+
+    elif zeta_i == DomainEdges[0]:
+        N = 0
+
+    elif zeta_i == DomainEdges[1]:
+        N = 0
+
+    elif zeta_i - left_edge < r:
+        distance_to_left_edge = zeta_i - left_edge
+
+        if zeta_i > zeta:
+            reduced_radius = distance_to_left_edge
+            N = LinearFilter(zeta, zeta_i, reduced_radius)
+        else:
+            N = LinearFilter(zeta, zeta_i, r)
+            # if 2*distance_to_left_edge < r:
+            #     reduced_radius = 2*distance_to_left_edge
+            #     N = LinearFilter(zeta, zeta_i, reduced_radius)
+            # else:
+            #     N = LinearFilter(zeta, zeta_i, r)
+
+    elif right_edge - zeta_i < r:
+        distance_to_right_edge = right_edge - zeta_i
+
+        if zeta_i < zeta:
+            reduced_radius = distance_to_right_edge
+            N = LinearFilter(zeta, zeta_i, reduced_radius)
+        else:
+            N = LinearFilter(zeta, zeta_i, r)
+            # if 2*distance_to_right_edge < r:
+            #     reduced_radius = 2*distance_to_right_edge
+            #     N = LinearFilter(zeta, zeta_i, reduced_radius)
+            # else:
+            #     N = LinearFilter(zeta, zeta_i, r)
+
+    else:
+        N = LinearFilter(zeta, zeta_i, r)
 
     return N
 

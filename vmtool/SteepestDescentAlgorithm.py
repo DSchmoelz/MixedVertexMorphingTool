@@ -10,13 +10,16 @@
 
 # external imports
 import numpy as np
+import pandas as pd
+import os
+import shutil
 # internal imports
 from .Node import *
 from .Mesh import Mesh
 
 class SteepestDescentAlgorithm(object):
 
-    def __init__(self, name, Mapper, Convergence, StepSize, NormalizeObjGrad=False):
+    def __init__(self, name, Mapper, Convergence, StepSize, NormalizeObjGrad=False, HistoryFolder="history"):
 
         self.Name = name
         self.Mapper = Mapper
@@ -32,6 +35,13 @@ class SteepestDescentAlgorithm(object):
         self.PreviousControlFields = []
         self.PreviousObjectiveValue = []
 
+        self.HistoryFolder = HistoryFolder
+        self.history_data = {
+            "iteration": [],
+            "objective": [],
+            "step_size": []
+        }
+
         self.ControlParameter = []
 
     def AddObjective(self, Response):
@@ -41,6 +51,8 @@ class SteepestDescentAlgorithm(object):
         self.ControlFields["d{}/dp".format(Response.Name)] = np.zeros(self.Mapper.ControlSize)
 
     def StartOptimization(self):
+
+        self._InitializeHistory()
 
         while not self.Convergence.Converged:
             self.StepNumber += 1
@@ -56,10 +68,15 @@ class SteepestDescentAlgorithm(object):
                 objective.Calculate()
                 objective_value = objective.Value
             ###
+            self._SaveHistory()
+            self._SaveDesign()
             self.Convergence.CheckIfConverged(objective_value, self.StepNumber)
 
         # Finalisierung
+        self.StepNumber += 1
         self._CalculateObjectives()
+        self.history_data["step_size"].append(None)
+        self._SaveHistory()
 
     def _CalculateMapping(self):
         self.Mapper.Calculate()
@@ -71,6 +88,7 @@ class SteepestDescentAlgorithm(object):
             self.DesignFields["d{}/dz".format(objective.Name)] = objective.Gradients
 
         self.PreviousObjectiveValue.append(objective.Value)
+        self.history_data["objective"].append(objective.Value)
 
     def _MapObjectiveGradients(self):
         # TODO: Funktioniert derzeit nur für eine Response
@@ -92,7 +110,8 @@ class SteepestDescentAlgorithm(object):
         # delta_p = - alpha * dg/dp
         objective = list(self.Objectives.values())[0]
         step_size = self.StepSize.ComputeStepSize(control_gradients, objective)
-        print("step_size: {}".format(step_size))
+        self.history_data["step_size"].append(step_size)
+        # print("step_size: {}".format(step_size))
         control_update = - step_size * control_gradients
         self.ControlFields["delta_p"] = control_update
 
@@ -126,6 +145,28 @@ class SteepestDescentAlgorithm(object):
         self.DesignFields["z"] = self.Mapper.Design.GetShapeZ()
         self.PreviousDesignFields.append(self.DesignFields.copy())
         self.Mapper.Design.UpdateDesignVariables(design_update)
+
+    def _InitializeHistory(self):
+        if os.path.exists(f"./{self.HistoryFolder}"):
+            shutil.rmtree(f"./{self.HistoryFolder}")
+
+        os.makedirs(f"./{self.HistoryFolder}")
+
+    def _SaveHistory(self):
+        self.history_data["iteration"] = np.arange(self.StepNumber)
+
+        dataframe = pd.DataFrame(self.history_data)
+        dataframe.to_csv(f"./{self.HistoryFolder}/obj_history.csv", index=False)
+
+    def _SaveDesign(self):
+
+        design_data = {
+            "x": self.DesignFields["x"],
+            "z": self.DesignFields["z"]
+        }
+
+        dataframe = pd.DataFrame(design_data)
+        dataframe.to_csv(f"./{self.HistoryFolder}/design_geometry_{self.StepNumber}.csv", index=False)
 
     ## TODO: Plotten/Animieren der Ergebnisse. Ausserhalb des OptimierungsAlgorithmus?!
     ## Erstellen der DataFields usw. in einer eigenen Optimization Klasse??
