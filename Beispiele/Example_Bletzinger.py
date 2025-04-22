@@ -16,16 +16,24 @@ from vmtool import *
 import matplotlib.pyplot as plt
 
 def control_geometry(x_j):
-    if x_j < 0:
+    if x_j < 0 and x_j >= -4:
         p_j = 3/4 * x_j + 3
-    elif x_j > 0:
+    elif x_j > 0 and x_j <= 4:
         p_j = -3/4 * x_j + 3
-    else:
+    elif x_j == 0:
         p_j = 3
+    else:
+        p_j = 0
+
     return p_j
 
-control_number_of_nodes = 5
-x_j = np.linspace(-4, 4, control_number_of_nodes)
+filter_radius = 4
+x_limit = filter_radius + 4
+control_number_of_nodes = (x_limit)*2+1
+x_j = np.linspace(-x_limit, x_limit, control_number_of_nodes)
+
+# control_number_of_nodes = 9
+# x_j = np.linspace(-4, 4, control_number_of_nodes)
 p_j = np.zeros(control_number_of_nodes)
 
 ControlNodeList = []
@@ -39,7 +47,7 @@ ControlMesh.AddNodes(ControlNodeList)
 
 filter_radius = 4
 x_limit = filter_radius + 4
-design_number_of_nodes = (x_limit)*1+1
+design_number_of_nodes = (x_limit)*2+1
 x_i = np.linspace(-x_limit, x_limit, design_number_of_nodes)
 
 DesignNodeList = []
@@ -79,5 +87,7 @@ z_i_B = B.MapUpdate(p_j)
 
 plt.plot(x_i, z_i_B, '-', label='design shape Riemann sum, r = {}'.format(filter_radius))
 
+print(z_i_A)
+print(z_i_B)
 plt.legend()
 plt.show()

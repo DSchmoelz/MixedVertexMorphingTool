@@ -60,11 +60,11 @@ TargetMesh.AddNodes(TargetNodeList)
 # linestyles = ['solid', 'solid', 'solid', 'solid', (0, (5, 10)), (0, (5, 10))]
 
 # all scaling types beside pure sensitivity scaling
-scaling_types =["none", "column", "shape", "shape_diag_mass"]
-colors = ['gray', 'green', 'red', 'orange']
-markers = ['X', 'P', 'o', 's']
-plot_steps = [5, 1, 1, 3]
-linestyles = ['solid', 'solid', 'solid', 'solid']
+scaling_types =["none", "shape", "shape_diag_mass"]
+colors = ['gray', 'red', 'orange']
+markers = ['X', 'o', 's']
+plot_steps = [5, 1, 3]
+linestyles = ['solid', 'solid', 'solid']
 
 # no scaling at all
 # scaling_types = ["none"]
