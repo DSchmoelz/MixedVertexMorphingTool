@@ -40,7 +40,7 @@ class RigidBodyParameterization():
         if "center" in settings:
             self.center = np.array(settings["center"])
 
-        self.Control = self.ControlSize
+        self.Control = np.zeros(self.ControlSize)
 
     def Calculate(self, blending=None):
 

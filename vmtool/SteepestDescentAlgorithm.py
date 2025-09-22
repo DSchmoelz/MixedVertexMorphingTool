@@ -16,6 +16,8 @@ import shutil
 # internal imports
 from .Node import *
 from .Mesh import Mesh
+from .VertexMorphingRigidBodyParameterization import VertexMorphingRigidBodyParameterization
+from .RigidBodyParameterization import RigidBodyParameterization
 
 class SteepestDescentAlgorithm(object):
 
@@ -127,6 +129,14 @@ class SteepestDescentAlgorithm(object):
                 control_parameter = self.ControlParameter[-len(unscaled_control_update)] + unscaled_control_update[i]
                 self.ControlParameter.append(control_parameter)
 
+        if isinstance(self.Mapper, VertexMorphingRigidBodyParameterization):
+            self.Mapper.RigidBody.Control[0] += unscaled_control_update[-2]
+            self.Mapper.RigidBody.Control[1] += unscaled_control_update[-1]
+
+        elif isinstance(self.Mapper, RigidBodyParameterization):
+            self.Mapper.Control[0] += unscaled_control_update[-2]
+            self.Mapper.Control[1] += unscaled_control_update[-1]
+
     def _MapControlUpdate(self):
 
         control_update = self.ControlFields["delta_p"]
@@ -145,6 +155,8 @@ class SteepestDescentAlgorithm(object):
         self.DesignFields["z"] = self.Mapper.Design.GetShapeZ()
         self.PreviousDesignFields.append(self.DesignFields.copy())
         self.Mapper.Design.UpdateDesignVariables(design_update)
+        self.DesignFields["x"] = self.Mapper.Design.GetNodeCoordinatesX()
+        self.DesignFields["z"] = self.Mapper.Design.GetShapeZ()
 
     def _InitializeHistory(self):
         if os.path.exists(f"./{self.HistoryFolder}"):
@@ -164,6 +176,14 @@ class SteepestDescentAlgorithm(object):
             "x": self.DesignFields["x"],
             "z": self.DesignFields["z"]
         }
+
+        if isinstance(self.Mapper, VertexMorphingRigidBodyParameterization):
+            design_data["translation"] = self.Mapper.RigidBody.Control[0]
+            design_data["rotation"] = self.Mapper.RigidBody.Control[1]
+
+        elif isinstance(self.Mapper, RigidBodyParameterization):
+            design_data["translation"] = self.Mapper.Control[0]
+            design_data["rotation"] = self.Mapper.Control[1]
 
         dataframe = pd.DataFrame(design_data)
         dataframe.to_csv(f"./{self.HistoryFolder}/design_geometry_{self.StepNumber}.csv", index=False)
