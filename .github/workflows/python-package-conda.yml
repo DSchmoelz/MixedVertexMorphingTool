@@ -20,7 +20,8 @@ jobs:
         echo $CONDA/bin >> $GITHUB_PATH
     - name: Install Packages
       run: |
-        conda env update --file requirements.txt --name base
+        conda env create -f environment.yml
+        source activate mixedvm
 #    - name: Lint with flake8
 #      run: |
 #        conda install flake8
