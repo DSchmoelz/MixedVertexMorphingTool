@@ -10,6 +10,7 @@
 
 # external imports
 import numpy as np
+import time
 # internal imports
 from .ShapeFunctions import *
 from .GaussianQuadrature import *
@@ -47,20 +48,6 @@ class GaussianIntegration():
                         self.MappingMatrix[self.Design.GetNodeIndex(design_node.id), self.Control.GetNodeIndex(control_node.id)] += interval_length/2 * LinearHatFunction(gauss_point, design_node.x, self.FilterRadius) * self.Control.GetShapeFunctionValueOfNode(gauss_point, control_node) * gauss_weight
 
         return self.MappingMatrix
-
-    #TODO: Funktioniert noch nicht! Filter Funktion muss noch angepasst werden.
-    def CalculateVaryingFilter(self):
-        for design_node in self.Design.Nodes:
-
-            integration_intervals = self.GetIntegrationIntervals(design_node)
-
-            for interval in integration_intervals:
-                gauss_points, gauss_weights = CalculateGaussPointsAndWeights(self.nGP, interval[0], interval[1])
-                interval_length = interval[1] - interval[0]
-
-                for control_node in self.Control.Nodes:
-                    for gauss_point, gauss_weight in zip(gauss_points, gauss_weights):
-                        self.MappingMatrix[self.Design.GetNodeIndex(design_node.id), self.Control.GetNodeIndex(control_node.id)] += interval_length/2 * VaryingLinearHatFunction(gauss_point, design_node.x, self.FilterRadius, self.DesignSpace, 1) * self.Control.GetShapeFunctionValueOfNode(gauss_point, control_node) * gauss_weight
 
     def GetIntegrationIntervals(self, node):
 
@@ -127,7 +114,6 @@ class RiemannSum():
                 nodal_area_i = nodal_areas[neighbour_nodes_index]
 
                 weight = nodal_area_i * LinearFilter(control_neighbour_node.x, design_node.x, self.FilterRadius)
-                # weight = nodal_area_i * VaryingLinearFunction(control_neighbour_node.x, design_node.x, self.FilterRadius, self.domain_edges)
                 weights[i] = weight
                 sum_of_weights += weight
 
@@ -135,20 +121,6 @@ class RiemannSum():
 
             if abs(sum_of_weights) > 1e-16:
                 self.MappingMatrix[self.Design.GetNodeIndex(design_node.id), :] /= sum_of_weights
-
-        #     max_sum_of_weights = max(max_sum_of_weights, sum_of_weights)
-
-        # self.MappingMatrix /= max_sum_of_weights
-
-        # TODO: im ShapeModul wird sum_of_weigths verwendet, um Mapping Matrix zu skalieren.
-        # Warum benötige ich hier max_sum_of_weights?
-
-        # for i in range(len(control_neighbour_nodes)):
-
-        #     control_neighbour_node = control_neighbour_nodes[i]
-
-        #     if abs(sum_of_weights) > 1e-16:
-        #         self.MappingMatrix[self.Design.GetNodeIndex(design_node.id), self.Control.GetNodeIndex(control_neighbour_node.id)] += weights[i] #/ sum_of_weights
 
         return self.MappingMatrix
 
@@ -173,12 +145,15 @@ class VertexMorphing():
         else:
             ValueError("'scaling_type' unknown!")
 
+        self.scaling_calculation_time = []
+
     def Calculate(self, blending=None):
 
         self.MappingMatrix = self.IntegrationMethod.CalculateMappingMatrix()
         if blending is not None:
             self.MappingMatrix *= blending[:, np.newaxis]
 
+        start = time.time()
         if self.scaling_type == "none" or self.scaling_type == "pseudo_inv":
             self.scaling_matrix = np.eye(self.ControlSize)
         elif self.scaling_type == "shape":
@@ -191,6 +166,9 @@ class VertexMorphing():
             self.scaling_matrix = self.CalculateVariableScalingMatrix(mass_matrix)
         else:
             ValueError("'scaling_type' unknown!")
+
+        end = time.time()
+        self.scaling_calculation_time.append(end - start)
 
     def MapGradient(self, gradient):
 
@@ -231,7 +209,6 @@ class VertexMorphing():
         if np.any(diagonal == 0.0):
             M[diagonal == 0.0, diagonal == 0.0] = 1.0
 
-        # TODO: find suitable tolerance
         # set all entries < 1e-8 to 0
         bad_indices = abs(M) < 1e-8
         M[bad_indices] = 0
@@ -249,7 +226,6 @@ class VertexMorphing():
         if np.any(diagonal == 0.0):
             M[diagonal == 0.0, diagonal == 0.0] = 1.0
 
-        # TODO: find suitable tolerance
         # set all entries < 1e-8 to 0
         bad_indices = abs(M) < 1e-8
         M[bad_indices] = 0

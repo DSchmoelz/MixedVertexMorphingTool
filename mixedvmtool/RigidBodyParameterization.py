@@ -10,6 +10,7 @@
 
 # external imports
 import numpy as np
+import time
 # internal imports
 from .Node import *
 from .Mesh import Mesh
@@ -42,6 +43,8 @@ class RigidBodyParameterization():
 
         self.Control = np.zeros(self.ControlSize)
 
+        self.scaling_calculation_time = []
+
     def Calculate(self, blending=None):
 
         self.MappingMatrix = np.zeros([len(self.Design.Nodes),
@@ -57,6 +60,7 @@ class RigidBodyParameterization():
         if blending is not None:
             self.MappingMatrix *= blending[:, np.newaxis]
 
+        start = time.time()
         if self.scaling_type == "none":
             self.scaling_matrix = np.eye(self.ControlSize)
         elif self.scaling_type == "column":
@@ -84,7 +88,8 @@ class RigidBodyParameterization():
         else:
             ValueError("'scaling_type' unknown!")
 
-        # print("Scaling Matrix: {}".format(self.scaling_matrix))
+        end = time.time()
+        self.scaling_calculation_time.append(end - start)
 
     def MapGradient(self, gradient):
 
@@ -148,10 +153,6 @@ class RigidBodyParameterization():
             for j in range(matrix.shape[1]):
                 M[i, j] = matrix[:, i] @ np.multiply(matrix[:, j], nodal_areas)
 
-        # diagonal = M.diagonal()
-        # if np.any(diagonal == 0.0):
-        #     M[diagonal == 0.0, diagonal == 0.0] = 1.0
-
         return M
 
     @staticmethod
@@ -159,10 +160,6 @@ class RigidBodyParameterization():
         M = np.zeros((matrix.shape[1], matrix.shape[1]))
         for i in range(matrix.shape[1]):
             M[i, i] = np.sum(np.multiply(abs(matrix[:, i]), nodal_areas))
-
-        # diagonal = M.diagonal()
-        # if np.any(diagonal == 0.0):
-        #     M[diagonal == 0.0, diagonal == 0.0] = 1.0
 
         return M
 
@@ -179,4 +176,3 @@ class RigidBodyParameterization():
         D = np.diag(eigvals)
 
         return P @ np.sqrt(D)  # this is applied to update and the transpose to gradients
-

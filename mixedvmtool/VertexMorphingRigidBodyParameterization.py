@@ -10,6 +10,7 @@
 
 # external imports
 import numpy as np
+import time
 # internal imports
 from .Node import *
 from .Mesh import Mesh
@@ -43,6 +44,7 @@ class VertexMorphingRigidBodyParameterization():
         self.Control = np.zeros(self.ControlSize)
 
         self.scaling_type = settings["scaling"]
+        self.scaling_calculation_time = []
 
     def Calculate(self):
 
@@ -55,21 +57,16 @@ class VertexMorphingRigidBodyParameterization():
         self.MappingMatrix[:,
                            computed_parameters:computed_parameters+self.VertexMorphing.ControlSize] = self.VertexMorphing.MappingMatrix
 
-
-        # self.MappingMatrix[:, computed_parameters:computed_parameters+self.VertexMorphing.ControlSize] *= self.VertexMorphingBlending[:, np.newaxis]
-
         computed_parameters += self.VertexMorphing.ControlSize
         self.RigidBody.Calculate(self.RigidBodyBlending)
 
         self.MappingMatrix[:,
                            computed_parameters:computed_parameters+self.RigidBody.ControlSize] = self.RigidBody.MappingMatrix
 
-        # self.MappingMatrix[:,
-        #                    computed_parameters:computed_parameters+self.RigidBody.ControlSize] *= self.RigidBodyBlending[:, np.newaxis]
-
         self.scaling_matrix = np.eye(self.ControlSize)
 
         if self.scaling_type == "shape_w_off":
+            start = time.time()
             nodal_areas = self.Design.ComputeNodalAreas()
             mass_matrix = np.zeros((self.ControlSize, self.ControlSize))
             computed_parameters = 0
@@ -88,11 +85,15 @@ class VertexMorphingRigidBodyParameterization():
             mass_matrix[computed_parameters:computed_parameters+self.RigidBody.ControlSize,
                         computed_parameters:computed_parameters+self.RigidBody.ControlSize] = self.CalculateMassMatrix(nodal_areas, self.RigidBody.MappingMatrix)
 
-            # print("Mass Matrix: {}".format(mass_matrix))
-
             self.scaling_matrix = self.CalculateVariableScalingMatrix(mass_matrix)
+            end = time.time()
+            self.scaling_calculation_time.append(end - start)
 
         elif self.scaling_type in ["shape", "shape_diag"]:
+            self.scaling_calculation_time.append(
+                self.VertexMorphing.scaling_calculation_time[-1] +
+                self.RigidBody.scaling_calculation_time[-1])
+
             self.scaling_matrix = np.zeros((self.ControlSize, self.ControlSize))
             computed_parameters = 0
             self.scaling_matrix[computed_parameters:computed_parameters+self.VertexMorphing.ControlSize,
@@ -102,27 +103,6 @@ class VertexMorphingRigidBodyParameterization():
 
             self.scaling_matrix[computed_parameters:computed_parameters+self.RigidBody.ControlSize,
                                 computed_parameters:computed_parameters+self.RigidBody.ControlSize] = self.RigidBody.scaling_matrix
-
-        # print("Scaling Matrix: {}".format(self.scaling_matrix))
-        # print("Mapping Matrix: {}".format(self.MappingMatrix))
-
-        # exit()
-        # print("Mapping Matrix: {}".format(self.MappingMatrix))
-        # if self.scaling_type == "none":
-        #     self.scaling_matrix = np.eye(self.ControlSize)
-        # elif self.scaling_type == "column":
-        #     self.scaling_matrix = np.zeros([self.ControlSize, self.ControlSize])
-        #     for column in range(self.ControlSize):
-        #         scale_factor = np.max(self.MappingMatrix[:, column])
-        #         self.scaling_matrix[column, column] = 1/scale_factor
-        # elif self.scaling_type == "shape":
-        #     nodal_areas = self.Design.ComputeNodalAreas()
-        #     mass_matrix = self.CalculateMassMatrix(nodal_areas, self.MappingMatrix)
-        #     self.scaling_matrix = self.CalculateVariableScalingMatrix(mass_matrix)
-        # else:
-        #     ValueError("'scaling_type' unknown!")
-
-
 
     def MapGradient(self, gradient):
 

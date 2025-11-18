@@ -32,7 +32,7 @@ class SteepestDescentAlgorithm(object):
         self.NormalizeObjGrad = NormalizeObjGrad
         self.DesignFields = {}
         self.ControlFields = {}
-        # self.OldMapperList = []
+
         self.PreviousDesignFields = []
         self.PreviousControlFields = []
         self.PreviousObjectiveValue = []
@@ -65,7 +65,7 @@ class SteepestDescentAlgorithm(object):
             self._CalculateControlUpdate()
             self._MapControlUpdate()
             self._UpdateDesign()
-            ### TODO: fix hacky code
+            ###
             for objective in self.Objectives.values():
                 objective.Calculate()
                 objective_value = objective.Value
@@ -84,7 +84,6 @@ class SteepestDescentAlgorithm(object):
         self.Mapper.Calculate()
 
     def _CalculateObjectives(self):
-        # TODO: Funktioniert derzeit nur für eine Response
         for objective in self.Objectives.values():
             objective.Calculate()
             self.DesignFields["d{}/dz".format(objective.Name)] = objective.Gradients
@@ -93,7 +92,6 @@ class SteepestDescentAlgorithm(object):
         self.history_data["objective"].append(objective.Value)
 
     def _MapObjectiveGradients(self):
-        # TODO: Funktioniert derzeit nur für eine Response
         weight = 1
         self.ControlFields["dg/dp"] = np.zeros(self.Mapper.ControlSize)
         for objective in self.Objectives.values():
@@ -113,19 +111,16 @@ class SteepestDescentAlgorithm(object):
         objective = list(self.Objectives.values())[0]
         step_size = self.StepSize.ComputeStepSize(control_gradients, objective)
         self.history_data["step_size"].append(step_size)
-        # print("step_size: {}".format(step_size))
         control_update = - step_size * control_gradients
         self.ControlFields["delta_p"] = control_update
 
         unscaled_control_update = np.zeros(self.Mapper.ControlSize)
         unscaled_control_update = self.Mapper.GetUnscaledControlParameter(control_update)
-        # print("unscaled_control_update: {}".format(unscaled_control_update))
 
         for i in range(len(unscaled_control_update)):
             if self.StepNumber == 1:
                 self.ControlParameter.append(unscaled_control_update[i])
             else:
-                # print(self.ControlParameter[-(len(unscaled_control_update)-i)])
                 control_parameter = self.ControlParameter[-len(unscaled_control_update)] + unscaled_control_update[i]
                 self.ControlParameter.append(control_parameter)
 
@@ -144,10 +139,6 @@ class SteepestDescentAlgorithm(object):
         self.DesignFields["delta_z"] = design_update
 
     def _UpdateDesign(self):
-        # save old geometry in old mapper
-        # self.OldMapperList.append(self.Mapper)
-        # save old design and control fields
-
         self.PreviousControlFields.append(self.ControlFields.copy())
 
         design_update = self.DesignFields["delta_z"]
@@ -187,6 +178,3 @@ class SteepestDescentAlgorithm(object):
 
         dataframe = pd.DataFrame(design_data)
         dataframe.to_csv(f"./{self.HistoryFolder}/design_geometry_{self.StepNumber}.csv", index=False)
-
-    ## TODO: Plotten/Animieren der Ergebnisse. Ausserhalb des OptimierungsAlgorithmus?!
-    ## Erstellen der DataFields usw. in einer eigenen Optimization Klasse??

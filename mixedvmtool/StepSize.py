@@ -5,7 +5,7 @@
 # Author: David Schmölz
 # david.schmoelz@tum.de
 #####################################################################
-# Step Size Method
+# Step Size Methods
 #####################################################################
 
 # external imports
@@ -66,7 +66,7 @@ class GoldenSectionLineSearch(StepSize):
             self.Mapper.Design.UpdateDesignVariables(-design_update)
 
             return f
-        # print("### Step Size Computation start ###")
+
         alpha_l = 0
         alpha_u = self.MaxStepSize
 
@@ -75,16 +75,9 @@ class GoldenSectionLineSearch(StepSize):
 
         alpha_2 = self.tau*alpha_l + (1-self.tau)*alpha_u
         f_2 = _CalculateObjective(alpha_2, search_direction, objective)
-        # print(f"### Max Number of Steps: {self.NumberOfSteps}")
         K = 3 + 1
         while K < self.NumberOfSteps:
-            # print(f"### Step: {K}")
-            # print(f"### alpha_l: {alpha_l}")
-            # print(f"### alpha_u: {alpha_u}")
-            # print(f"### alpha_1: {alpha_1}")
-            # print(f"### alpha_2: {alpha_2}")
-            # print(f"### f_1: {f_1}")
-            # print(f"### f_2: {f_2}")
+
             if f_1 > f_2:
                 alpha_l = alpha_1
                 f_l = f_1
