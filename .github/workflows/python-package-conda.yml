@@ -32,4 +32,4 @@ jobs:
     - name: unit Tests
       run: |
         conda install pytest
-        pytest vmtool/unitTests/
+        pytest unitTests/

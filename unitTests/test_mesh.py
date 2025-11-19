@@ -60,7 +60,7 @@ class TestMesh(unittest.TestCase):
         mesh.AddNode(new_node)
 
         self.assertEqual(mesh.GetNodeWithId(5).x, 5)
-        self.assertEqual(mesh.GetNodeWithId(5).p, 10)
+        self.assertEqual(mesh.GetNodeWithId(5).z, 10)
         self.assertEqual(len(mesh.Nodes), 6)
 
     def test_get_node_neighbours(self):
