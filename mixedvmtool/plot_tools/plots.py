@@ -8,11 +8,8 @@ try:
 except ImportError:
     from tum_colors import *
 
-from distutils.spawn import find_executable
-if find_executable('latex'):
-    USE_TEX = True
-else:
-    USE_TEX = False
+import shutil
+USE_TEX = bool(shutil.which('latex'))
 
 GOLDEN_RATIO = 1.618
 
