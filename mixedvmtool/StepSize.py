@@ -100,6 +100,7 @@ class GoldenSectionLineSearch(StepSize):
 
             K += 1
 
+        print(f"Step size iterations: {K}")
         if alpha_l == 0.0:
             return alpha_1
 

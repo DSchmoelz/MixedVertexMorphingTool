@@ -13,6 +13,7 @@ import numpy as np
 import pandas as pd
 import os
 import shutil
+import time
 # internal imports
 from .Node import *
 from .Mesh import Mesh
@@ -41,10 +42,9 @@ class SteepestDescentAlgorithm(object):
         self.history_data = {
             "iteration": [],
             "objective": [],
-            "step_size": []
+            "step_size": [],
+            # "scaling_calc_time": [],
         }
-
-        self.ControlParameter = []
 
     def AddObjective(self, Response):
 
@@ -59,8 +59,11 @@ class SteepestDescentAlgorithm(object):
         while not self.Convergence.Converged:
             self.StepNumber += 1
             print("Starting Optimization Step: {} of {}".format(self.StepNumber, self.Name))
+            # if self.StepNumber == 1:
             self._CalculateMapping()
             self._CalculateObjectives()
+            if self.StepNumber == 1:
+                self.Convergence.InitialObjectiveValue = self.history_data["objective"][0]
             self._MapObjectiveGradients()
             self._CalculateControlUpdate()
             self._MapControlUpdate()
@@ -78,6 +81,7 @@ class SteepestDescentAlgorithm(object):
         self.StepNumber += 1
         self._CalculateObjectives()
         self.history_data["step_size"].append(None)
+        # self.history_data["scaling_calc_time"].append(None)
         self._SaveHistory()
 
     def _CalculateMapping(self):
@@ -109,7 +113,10 @@ class SteepestDescentAlgorithm(object):
         control_gradients = self.ControlFields["dg/dp"]
         # delta_p = - alpha * dg/dp
         objective = list(self.Objectives.values())[0]
+        start = time.time()
         step_size = self.StepSize.ComputeStepSize(control_gradients, objective)
+        end = time.time()
+        print(f"Step size computation time: {end - start}s")
         self.history_data["step_size"].append(step_size)
         control_update = - step_size * control_gradients
         self.ControlFields["delta_p"] = control_update
@@ -117,20 +124,11 @@ class SteepestDescentAlgorithm(object):
         unscaled_control_update = np.zeros(self.Mapper.ControlSize)
         unscaled_control_update = self.Mapper.GetUnscaledControlParameter(control_update)
 
-        for i in range(len(unscaled_control_update)):
-            if self.StepNumber == 1:
-                self.ControlParameter.append(unscaled_control_update[i])
-            else:
-                control_parameter = self.ControlParameter[-len(unscaled_control_update)] + unscaled_control_update[i]
-                self.ControlParameter.append(control_parameter)
-
         if isinstance(self.Mapper, VertexMorphingRigidBodyParameterization):
-            self.Mapper.RigidBody.Control[0] += unscaled_control_update[-2]
-            self.Mapper.RigidBody.Control[1] += unscaled_control_update[-1]
+            self.Mapper.RigidBody.UpdateRigidBodyParameter(unscaled_control_update)
 
         elif isinstance(self.Mapper, RigidBodyParameterization):
-            self.Mapper.Control[0] += unscaled_control_update[-2]
-            self.Mapper.Control[1] += unscaled_control_update[-1]
+            self.Mapper.UpdateRigidBodyParameter(unscaled_control_update)
 
     def _MapControlUpdate(self):
 
@@ -154,9 +152,11 @@ class SteepestDescentAlgorithm(object):
             shutil.rmtree(f"./{self.HistoryFolder}")
 
         os.makedirs(f"./{self.HistoryFolder}")
+        os.makedirs(f"./{self.HistoryFolder}/design_geometry")
 
     def _SaveHistory(self):
         self.history_data["iteration"] = np.arange(self.StepNumber)
+        # self.history_data["scaling_calc_time"].append(self.Mapper.scaling_calculation_time)
 
         dataframe = pd.DataFrame(self.history_data)
         dataframe.to_csv(f"./{self.HistoryFolder}/obj_history.csv", index=False)
@@ -169,12 +169,16 @@ class SteepestDescentAlgorithm(object):
         }
 
         if isinstance(self.Mapper, VertexMorphingRigidBodyParameterization):
-            design_data["translation"] = self.Mapper.RigidBody.Control[0]
-            design_data["rotation"] = self.Mapper.RigidBody.Control[1]
+            if self.Mapper.RigidBody.translation:
+                design_data["translation"] = self.Mapper.RigidBody.Control[0]
+            if self.Mapper.RigidBody.rotation:
+                design_data["rotation"] = self.Mapper.RigidBody.Control[1]
 
         elif isinstance(self.Mapper, RigidBodyParameterization):
-            design_data["translation"] = self.Mapper.Control[0]
-            design_data["rotation"] = self.Mapper.Control[1]
+            if self.Mapper.translation:
+                design_data["translation"] = self.Mapper.Control[0]
+            if self.Mapper.rotation:
+                design_data["rotation"] = self.Mapper.Control[1]
 
         dataframe = pd.DataFrame(design_data)
-        dataframe.to_csv(f"./{self.HistoryFolder}/design_geometry_{self.StepNumber}.csv", index=False)
+        dataframe.to_csv(f"./{self.HistoryFolder}/design_geometry/design_geometry_{self.StepNumber}.csv", index=False)

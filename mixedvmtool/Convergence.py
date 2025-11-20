@@ -44,3 +44,19 @@ class ObjectiveValue(Convergence):
             self.Converged = True
         elif StepNumber >= self.MaxSteps:
             self.Converged = True
+
+class RelativeObjectiveValue(Convergence):
+
+    def __init__(self, RelativeObjectiveValue, MaxAmountOfSteps):
+
+        super().__init__()
+        self.InitialObjectiveValue = None
+        self.RelativeObjectiveValue = RelativeObjectiveValue
+        self.MaxSteps = MaxAmountOfSteps
+
+    def CheckIfConverged(self, ObjectiveValue, StepNumber):
+
+        if 1-(ObjectiveValue/self.InitialObjectiveValue) >= self.RelativeObjectiveValue:
+            self.Converged = True
+        elif StepNumber >= self.MaxSteps:
+            self.Converged = True

@@ -43,7 +43,7 @@ class RigidBodyParameterization():
 
         self.Control = np.zeros(self.ControlSize)
 
-        self.scaling_calculation_time = []
+        self.scaling_calculation_time = 0
 
     def Calculate(self, blending=None):
 
@@ -60,36 +60,45 @@ class RigidBodyParameterization():
         if blending is not None:
             self.MappingMatrix *= blending[:, np.newaxis]
 
-        start = time.time()
         if self.scaling_type == "none":
             self.scaling_matrix = np.eye(self.ControlSize)
         elif self.scaling_type == "column":
+            start = time.time()
             self.scaling_matrix = np.zeros([self.ControlSize, self.ControlSize])
             for column in range(self.ControlSize):
                 scale_factor = np.max(self.MappingMatrix[:, column])
                 self.scaling_matrix[column, column] = 1/scale_factor
+            end = time.time()
         elif self.scaling_type == "shape":
             nodal_areas = self.Design.ComputeNodalAreas()
             mass_matrix = self.CalculateMassMatrix(nodal_areas, self.MappingMatrix)
+            start = time.time()
             self.scaling_matrix = self.CalculateVariableScalingMatrix(mass_matrix)
+            end = time.time()
         elif self.scaling_type == "shape_diag_mass":
             nodal_areas = self.Design.ComputeNodalAreas()
             mass_matrix = self.CalculateDiagonalMassMatrix(nodal_areas, self.MappingMatrix)
+            start = time.time()
             self.scaling_matrix = np.zeros((self.ControlSize, self.ControlSize))
             np.fill_diagonal(self.scaling_matrix, np.sqrt(np.reciprocal(np.diag(mass_matrix))))
+            end = time.time()
         elif self.scaling_type == "sens_shape":
             nodal_areas = self.Design.ComputeNodalAreas()
             mass_matrix = self.CalculateMassMatrix(nodal_areas, self.MappingMatrix)
+            start = time.time()
             self.scaling_matrix = np.linalg.inv(mass_matrix)
+            end = time.time()
         elif self.scaling_type == "sens_shape_diag_mass":
             nodal_areas = self.Design.ComputeNodalAreas()
             mass_matrix = self.CalculateDiagonalMassMatrix(nodal_areas, self.MappingMatrix)
+            start = time.time()
             self.scaling_matrix = np.linalg.inv(mass_matrix)
+            end = time.time()
         else:
             ValueError("'scaling_type' unknown!")
 
-        end = time.time()
-        self.scaling_calculation_time.append(end - start)
+        if self.scaling_type != "none":
+            self.scaling_calculation_time = end - start
 
     def MapGradient(self, gradient):
 
@@ -108,6 +117,15 @@ class RigidBodyParameterization():
             design_update = self.MappingMatrix @ self.scaling_matrix @ control_update
 
         return design_update
+
+    def UpdateRigidBodyParameter(self, unscaled_control_update):
+
+        if self.translation and self.rotation:
+            self.Control[0] += unscaled_control_update[-2]
+            self.Control[1] += unscaled_control_update[-1]
+        else:
+            if self.translation or self.rotation:
+                self.Control[0] += unscaled_control_update[-1]
 
     def GetUnscaledControlParameter(self, control_update):
 

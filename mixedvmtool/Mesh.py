@@ -173,13 +173,13 @@ class Mesh(object):
                 neighbours = [node2, node1]
             return neighbours
 
-    def GetNodeInFilterRadius(self, x_i, r_left, r_right):
+    def GetNodeInFilterRadius(self, x_i, node_x, r_left, r_right):
 
         nodes_in_filter = []
+        node_indices = np.where((node_x > x_i - r_left) & (node_x < x_i + r_right))[0]
 
-        for node in self.Nodes:
-            if node.x > x_i - r_left and node.x < x_i + r_right:
-                nodes_in_filter.append(node)
+        for node_index in node_indices:
+            nodes_in_filter.append(self.Nodes[node_index])
 
         return nodes_in_filter
 
@@ -188,27 +188,6 @@ class Mesh(object):
         nodal_areas = np.zeros(len(self.Nodes))
 
         for node in self.Nodes:
-            # neighbours = self.GetNodeNeighbours(node.id)
-            # shape_function_lengths = self.GetNodeShapeFunctionLengths(node.id)
-
-        #     if len(neighbours) == 1 and neighbours[0].x > node.x:
-        #         delta_z = abs(neighbours[0].z - node.z)
-        #         delta_x = shape_function_lengths[1]
-        #         nodal_area_i = np.sqrt(delta_z**2 + delta_x**2)
-        #     elif len(neighbours) == 1 and neighbours[0].x < node.x:
-        #         delta_z = abs(node.z - neighbours[0].z)
-        #         delta_x = shape_function_lengths[0]
-        #         nodal_area_i = np.sqrt(delta_z**2 + delta_x**2)
-        #     else:
-        #         delta_z_0 = abs(node.z - neighbours[0].z)
-        #         delta_x_0 = shape_function_lengths[0]
-        #         delta_z_1 = abs(neighbours[1].z - node.z)
-        #         delta_x_1 = shape_function_lengths[1]
-        #         shape_function_lengths[1] = neighbours[1].x - node.x
-        #         shape_function_lengths[0] = node.x - neighbours[0].x
-
-
-        #     nodal_areas[self.GetNodeIndex(node.id)] = nodal_area_i
             nodal_areas[self.GetNodeIndex(node.id)] = np.sum(self.GetNodeShapeFunctionLengths(node.id))
 
         return nodal_areas
@@ -221,8 +200,9 @@ class Mesh(object):
     def ComputeBlendingFunction(self, node_set, radius):
 
         blending_function = np.zeros(len(self.Nodes))
+        node_x = self.GetNodeCoordinatesX()
         for blending_node in node_set:
-            nodes_in_filter = self.GetNodeInFilterRadius(blending_node.x, radius, radius)
+            nodes_in_filter = self.GetNodeInFilterRadius(blending_node.x, node_x, radius, radius)
             for node in nodes_in_filter:
                 # if node.id in node_id_set:
                 #     blending_value = 1

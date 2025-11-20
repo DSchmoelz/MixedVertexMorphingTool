@@ -52,7 +52,8 @@ class GaussianIntegration():
     def GetIntegrationIntervals(self, node):
 
         # find nodes in filter
-        nodes_in_filter = self.Control.GetNodeInFilterRadius(node.x, self.FilterRadius, self.FilterRadius)
+        node_x = self.Control.GetNodeCoordinatesX()
+        nodes_in_filter = self.Control.GetNodeInFilterRadius(node.x, node_x, self.FilterRadius, self.FilterRadius)
 
         position_of_nodes_in_filter = []
         for node_in_filter in nodes_in_filter:
@@ -99,10 +100,11 @@ class RiemannSum():
 
         nodal_areas = self.Control.ComputeNodalAreas()
         max_sum_of_weights = 0
+        node_x = self.Control.GetNodeCoordinatesX()
 
         for design_node in self.Design.Nodes:
 
-            control_neighbour_nodes = self.Control.GetNodeInFilterRadius(design_node.x, self.FilterRadius, self.FilterRadius)
+            control_neighbour_nodes = self.Control.GetNodeInFilterRadius(design_node.x, node_x, self.FilterRadius, self.FilterRadius)
             weights = np.zeros(len(control_neighbour_nodes))
             sum_of_weights = 0
 
@@ -145,7 +147,7 @@ class VertexMorphing():
         else:
             ValueError("'scaling_type' unknown!")
 
-        self.scaling_calculation_time = []
+        self.scaling_calculation_time = 0
 
     def Calculate(self, blending=None):
 
@@ -153,22 +155,25 @@ class VertexMorphing():
         if blending is not None:
             self.MappingMatrix *= blending[:, np.newaxis]
 
-        start = time.time()
         if self.scaling_type == "none" or self.scaling_type == "pseudo_inv":
             self.scaling_matrix = np.eye(self.ControlSize)
         elif self.scaling_type == "shape":
             nodal_areas = self.Design.ComputeNodalAreas()
             mass_matrix = self.CalculateDiagonalMassMatrix(nodal_areas, self.MappingMatrix)
+            start = time.time()
             self.scaling_matrix = self.CalculateDiagonalVariableScalingMatrix(mass_matrix)
+            end = time.time()
         elif self.scaling_type == "shape_non_diag":
             nodal_areas = self.Design.ComputeNodalAreas()
             mass_matrix = self.CalculateMassMatrix(nodal_areas, self.MappingMatrix)
+            start = time.time()
             self.scaling_matrix = self.CalculateVariableScalingMatrix(mass_matrix)
+            end = time.time()
         else:
             ValueError("'scaling_type' unknown!")
 
-        end = time.time()
-        self.scaling_calculation_time.append(end - start)
+        if self.scaling_type != "none":
+            self.scaling_calculation_time = end - start
 
     def MapGradient(self, gradient):
 
@@ -206,8 +211,13 @@ class VertexMorphing():
             M[i, i] = np.sum(np.multiply(matrix[:, i], nodal_areas))
 
         diagonal = M.diagonal()
-        if np.any(diagonal == 0.0):
-            M[diagonal == 0.0, diagonal == 0.0] = 1.0
+        tolerance = 1e-8
+        mask = np.isclose(diagonal, 0.0, atol=tolerance)
+        if np.any(mask):
+            M[mask, mask] = 1.0
+
+        # if np.any(diagonal == 0.0):
+        #     M[diagonal == 0.0, diagonal == 0.0] = 1.0
 
         # set all entries < 1e-8 to 0
         bad_indices = abs(M) < 1e-8
@@ -223,8 +233,10 @@ class VertexMorphing():
                 M[i, j] = matrix[:, i] @ np.multiply(matrix[:, j], nodal_areas)
 
         diagonal = M.diagonal()
-        if np.any(diagonal == 0.0):
-            M[diagonal == 0.0, diagonal == 0.0] = 1.0
+        tolerance = 1e-8
+        mask = np.isclose(diagonal, 0.0, atol=tolerance)
+        if np.any(mask):
+            M[mask, mask] = 1.0
 
         # set all entries < 1e-8 to 0
         bad_indices = abs(M) < 1e-8
@@ -251,7 +263,9 @@ class VertexMorphing():
 
         S = np.zeros(mass_matrix.shape)
 
-        for i in range(mass_matrix.shape[0]):
-            S[i,i] = np.sqrt((1/mass_matrix[i,i]))
+        np.fill_diagonal(S, np.sqrt(np.reciprocal(np.diag(mass_matrix))))
+
+        # for i in range(mass_matrix.shape[0]):
+        #     S[i,i] = np.sqrt((1/mass_matrix[i,i]))
 
         return S  # this is applied to update and the transpose to gradients

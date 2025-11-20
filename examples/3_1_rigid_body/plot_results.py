@@ -136,7 +136,7 @@ for i, history in enumerate(histories):
     x = []
     z = []
     for j in range(iterations):
-        path = f"{history}/design_geometry_{j+1}.csv"
+        path = f"{history}/design_geometry/design_geometry_{j+1}.csv"
         df = pd.read_csv(path, delimiter=",")
         df.columns = [x.strip() for x in df.columns]
         translation.append(float(df["translation"][0]))

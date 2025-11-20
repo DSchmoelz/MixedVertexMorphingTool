@@ -44,7 +44,7 @@ class VertexMorphingRigidBodyParameterization():
         self.Control = np.zeros(self.ControlSize)
 
         self.scaling_type = settings["scaling"]
-        self.scaling_calculation_time = []
+        self.scaling_calculation_time = 0
 
     def Calculate(self):
 
@@ -66,7 +66,6 @@ class VertexMorphingRigidBodyParameterization():
         self.scaling_matrix = np.eye(self.ControlSize)
 
         if self.scaling_type == "shape_w_off":
-            start = time.time()
             nodal_areas = self.Design.ComputeNodalAreas()
             mass_matrix = np.zeros((self.ControlSize, self.ControlSize))
             computed_parameters = 0
@@ -85,14 +84,14 @@ class VertexMorphingRigidBodyParameterization():
             mass_matrix[computed_parameters:computed_parameters+self.RigidBody.ControlSize,
                         computed_parameters:computed_parameters+self.RigidBody.ControlSize] = self.CalculateMassMatrix(nodal_areas, self.RigidBody.MappingMatrix)
 
+            start = time.time()
             self.scaling_matrix = self.CalculateVariableScalingMatrix(mass_matrix)
             end = time.time()
-            self.scaling_calculation_time.append(end - start)
+            self.scaling_calculation_time = end - start
 
         elif self.scaling_type in ["shape", "shape_diag"]:
-            self.scaling_calculation_time.append(
-                self.VertexMorphing.scaling_calculation_time[-1] +
-                self.RigidBody.scaling_calculation_time[-1])
+            self.scaling_calculation_time = (self.VertexMorphing.scaling_calculation_time +
+                                             self.RigidBody.scaling_calculation_time)
 
             self.scaling_matrix = np.zeros((self.ControlSize, self.ControlSize))
             computed_parameters = 0
@@ -151,10 +150,6 @@ class VertexMorphingRigidBodyParameterization():
             for j in range(matrix_b.shape[1]):
                 M[i, j] = matrix_a[:, i] @ np.multiply(matrix_b[:, j], nodal_areas)
 
-        # diagonal = M.diagonal()
-        # if np.any(diagonal == 0.0):
-        #     M[diagonal == 0.0, diagonal == 0.0] = 1.0
-
         return M
 
     @staticmethod
@@ -165,8 +160,10 @@ class VertexMorphingRigidBodyParameterization():
                 M[i, j] = matrix[:, i] @ np.multiply(matrix[:, j], nodal_areas)
 
         diagonal = M.diagonal()
-        if np.any(diagonal == 0.0):
-            M[diagonal == 0.0, diagonal == 0.0] = 1.0
+        tolerance = 1e-8
+        mask = np.isclose(diagonal, 0.0, atol=tolerance)
+        if np.any(mask):
+            M[mask, mask] = 1.0
 
         return M
 
