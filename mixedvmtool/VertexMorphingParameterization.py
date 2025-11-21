@@ -17,70 +17,6 @@ from .GaussianQuadrature import *
 from .Node import *
 from .Mesh import Mesh
 
-
-class GaussianIntegration():
-
-    def __init__(self, DesignMesh, ControlMesh, settings):
-
-        self.Design = DesignMesh
-        self.Control = ControlMesh
-        self.FilterRadius = settings["filter_radius"]
-
-        self.MappingMatrix = np.zeros([len(self.Design.Nodes),
-                                       len(self.Control.Nodes)])
-        self.nGP = 2
-        self.ControlSpace = self.Control.Space()
-        self.DesignSpace = self.Design.Space()
-        self.ControlSize = len(self.Control.Nodes)
-
-    def CalculateMappingMatrix(self):
-        for design_node in self.Design.Nodes:
-
-            integration_intervals = self.GetIntegrationIntervals(design_node)
-
-            for interval in integration_intervals:
-                gauss_points, gauss_weights = CalculateGaussPointsAndWeights(self.nGP, interval[0], interval[1])
-                interval_length = interval[1] - interval[0]
-
-                for control_node in self.Control.Nodes:
-                    for gauss_point, gauss_weight in zip(gauss_points, gauss_weights):
-
-                        self.MappingMatrix[self.Design.GetNodeIndex(design_node.id), self.Control.GetNodeIndex(control_node.id)] += interval_length/2 * LinearHatFunction(gauss_point, design_node.x, self.FilterRadius) * self.Control.GetShapeFunctionValueOfNode(gauss_point, control_node) * gauss_weight
-
-        return self.MappingMatrix
-
-    def GetIntegrationIntervals(self, node):
-
-        # find nodes in filter
-        node_x = self.Control.GetNodeCoordinatesX()
-        nodes_in_filter = self.Control.GetNodeInFilterRadius(node.x, node_x, self.FilterRadius, self.FilterRadius)
-
-        position_of_nodes_in_filter = []
-        for node_in_filter in nodes_in_filter:
-            position_of_nodes_in_filter.append(node_in_filter.x)
-
-        interval_points = position_of_nodes_in_filter
-
-        # add node position for filter itself
-        interval_points.append(node.x)
-        # add filter interval left
-        filter_start = node.x - self.FilterRadius
-        interval_points.append(filter_start)
-        # add filter interval right
-        filter_end = node.x + self.FilterRadius
-        interval_points.append(filter_end)
-
-        interval_points.sort()
-
-        # remove duplicates from list
-        interval_points = list(dict.fromkeys(interval_points))
-        intervals = np.zeros((len(interval_points)-1, 2))
-
-        for i in range(len(interval_points)-1):
-            intervals[i,:] = interval_points[i:i+2]
-
-        return intervals
-
 class RiemannSum():
 
     def __init__(self, DesignMesh, ControlMesh, settings):
@@ -98,31 +34,36 @@ class RiemannSum():
 
     def CalculateMappingMatrix(self):
 
+        print("Vertex Morphing - CalculateMappingMatrix: Starting")
+        start = time.time()
         nodal_areas = self.Control.ComputeNodalAreas()
         max_sum_of_weights = 0
         node_x = self.Control.GetNodeCoordinatesX()
 
-        for design_node in self.Design.Nodes:
+        for design_node_index, design_node in enumerate(self.Design.Nodes):
 
-            control_neighbour_nodes = self.Control.GetNodeInFilterRadius(design_node.x, node_x, self.FilterRadius, self.FilterRadius)
-            weights = np.zeros(len(control_neighbour_nodes))
+            control_neighbour_node_indices = self.Control.GetNodeInFilterRadius(design_node.x, node_x, self.FilterRadius, self.FilterRadius)
+            weights = np.zeros(len(control_neighbour_node_indices))
             sum_of_weights = 0
 
-            for i in range(len(control_neighbour_nodes)):
+            for i in range(len(control_neighbour_node_indices)):
 
-                control_neighbour_node = control_neighbour_nodes[i]
+                # control_neighbour_node = control_neighbour_nodes[i]
+                neighbour_nodes_index = control_neighbour_node_indices[i]
 
-                neighbour_nodes_index = self.Control.GetNodeIndex(control_neighbour_node.id)
                 nodal_area_i = nodal_areas[neighbour_nodes_index]
 
-                weight = nodal_area_i * LinearFilter(control_neighbour_node.x, design_node.x, self.FilterRadius)
+                weight = nodal_area_i * LinearFilter(node_x[neighbour_nodes_index], design_node.x, self.FilterRadius)
                 weights[i] = weight
                 sum_of_weights += weight
 
-                self.MappingMatrix[self.Design.GetNodeIndex(design_node.id), self.Control.GetNodeIndex(control_neighbour_node.id)] += weights[i]
+                self.MappingMatrix[design_node_index, neighbour_nodes_index] += weights[i]
 
             if abs(sum_of_weights) > 1e-16:
-                self.MappingMatrix[self.Design.GetNodeIndex(design_node.id), :] /= sum_of_weights
+                self.MappingMatrix[design_node_index, :] /= sum_of_weights
+
+        end = time.time()
+        print(f"Vertex Morphing - CalculateMappingMatrix: Finished in {end - start}s")
 
         return self.MappingMatrix
 
@@ -207,17 +148,14 @@ class VertexMorphing():
     @staticmethod
     def CalculateDiagonalMassMatrix(nodal_areas, matrix):
         M = np.zeros((matrix.shape[1], matrix.shape[1]))
-        for i in range(matrix.shape[1]):
-            M[i, i] = np.sum(np.multiply(matrix[:, i], nodal_areas))
+
+        M = np.diag((matrix * nodal_areas[:, None]).sum(axis=0))
 
         diagonal = M.diagonal()
         tolerance = 1e-8
         mask = np.isclose(diagonal, 0.0, atol=tolerance)
         if np.any(mask):
             M[mask, mask] = 1.0
-
-        # if np.any(diagonal == 0.0):
-        #     M[diagonal == 0.0, diagonal == 0.0] = 1.0
 
         # set all entries < 1e-8 to 0
         bad_indices = abs(M) < 1e-8
@@ -228,9 +166,9 @@ class VertexMorphing():
     @staticmethod
     def CalculateMassMatrix(nodal_areas, matrix):
         M = np.zeros((matrix.shape[1], matrix.shape[1]))
-        for i in range(matrix.shape[1]):
-            for j in range(matrix.shape[1]):
-                M[i, j] = matrix[:, i] @ np.multiply(matrix[:, j], nodal_areas)
+
+        weighted_matrix = matrix * nodal_areas[:, None]
+        M = matrix.T @ weighted_matrix
 
         diagonal = M.diagonal()
         tolerance = 1e-8
@@ -264,8 +202,5 @@ class VertexMorphing():
         S = np.zeros(mass_matrix.shape)
 
         np.fill_diagonal(S, np.sqrt(np.reciprocal(np.diag(mass_matrix))))
-
-        # for i in range(mass_matrix.shape[0]):
-        #     S[i,i] = np.sqrt((1/mass_matrix[i,i]))
 
         return S  # this is applied to update and the transpose to gradients

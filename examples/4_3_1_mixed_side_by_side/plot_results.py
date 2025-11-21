@@ -108,7 +108,7 @@ vm = np.arange(vm_x_min_max[0], vm_x_min_max[1]+1)
 transition = np.arange(vm_x_min_max[1], rb_x_min_max[0]+1)
 rb = np.arange(rb_x_min_max[0], rb_x_min_max[1]+1)
 InitialDesignMesh = CreateDesignMesh(28)
-plot = Plot()
+plot = Plot(xlabel=r'$\xi$', ylabel=r'$x$')
 
 plot.ax.plot(transition, np.zeros(transition.size),
              color=TUM_GRAY, label="initial transition",
@@ -126,6 +126,7 @@ plot.ax.plot(rb, np.zeros(rb.size),
 plot.ax.plot(TargetMesh.GetNodeCoordinatesX(), TargetMesh.GetShapeZ(), color=TUM_BLUE, label="target")
 
 plot.ax.set_xticks([0, 14, 18, 23, 28])
+plot.ax.set_ylim(-6,4.5)
 plot.add_legend(loc="lower left")
 handles, labels = plt.gca().get_legend_handles_labels()
 order = [1,2,0,3]
@@ -137,7 +138,7 @@ plt.savefig(f"{figure_folder}/fig_opt_problem.pdf")
 labels = ["unscaled", "scaled diagonal", "scaled mixed", "scaled w off-diagonal"]
 number_of_plots = 5
 for i in range(len(design_data)):
-    plot = Plot()
+    plot = Plot(xlabel=r'$\xi$', ylabel=r'$x$')
     plot.ax.plot(InitialDesignMesh.GetNodeCoordinatesX(), InitialDesignMesh.GetShapeZ(), color=TUM_BLUE_5, label="initial", linewidth=0.75, marker="|", markersize=4)
     plot.ax.plot(TargetMesh.GetNodeCoordinatesX(), TargetMesh.GetShapeZ(), color=TUM_BLUE, label="target")
     iterations = len(dfs[i]["objective"]) - 1
@@ -153,6 +154,7 @@ for i in range(len(design_data)):
                      linewidth=0.75,
                      marker='.', markersize=2,
                      label="iteration {}".format(index+1))
+    plot.ax.set_ylim(-6,4.5)
     plot.add_legend(loc="lower left")
     plt.tight_layout(pad=0.2)
     plt.savefig(f"{figure_folder}/fig_shape_evolution_{labels[i].replace(" ", "_")}.pdf")

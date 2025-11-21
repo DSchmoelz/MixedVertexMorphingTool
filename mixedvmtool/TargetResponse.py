@@ -33,11 +33,11 @@ class TargetGeometryResponse():
         self.Value = 0
         self.Gradients = np.zeros(len(self.Design.Nodes))
 
-        for design_node in self.Design.Nodes:
+        for design_node_index, design_node in enumerate(self.Design.Nodes):
 
             # g = z_i_target - z_i
             g_i =  self.Target.GetGeometryAt(design_node.x) - design_node.z
             # g = sum(g_i²)
             self.Value += g_i * g_i
             # dg/dz_i = 2 * (z_i_target - z_i) = -2 * g_i
-            self.Gradients[self.Design.GetNodeIndex(design_node.id)] = -2 * g_i
+            self.Gradients[design_node_index] = -2 * g_i

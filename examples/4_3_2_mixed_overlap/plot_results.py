@@ -56,7 +56,7 @@ for i, history in enumerate(histories):
     x = []
     z = []
     for j in range(iterations):
-        path = f"{history}/design_geometry_{j+1}.csv"
+        path = f"{history}/design_geometry/design_geometry_{j+1}.csv"
         df = pd.read_csv(path, delimiter=",")
         df.columns = [x.strip() for x in df.columns]
         translation.append(float(df["translation"][0]))
@@ -113,7 +113,7 @@ transition_2 = np.arange(vm_x_min_max[1], vm_x_min_max[1]+2+0.5, 0.5)
 vm = np.arange(vm_x_min_max[0], vm_x_min_max[1]+0.5, 0.5)
 rb_1 = np.arange(rb_x_min_max[0], transition_1[0]+0.5, 0.5)
 rb_2 = np.arange(transition_2[-1], rb_x_min_max[1]+0.5, 0.5)
-plot = Plot()
+plot = Plot(xlabel=r'$\xi$', ylabel=r'$x$')
 plot.ax.plot(transition_1, np.zeros(transition_1.size),
              color=TUM_GRAY, label="initial transition",
              linewidth=0.75,
@@ -148,7 +148,7 @@ plt.savefig(f"{figure_folder}/fig_opt_problem.pdf")
 labels = ["unscaled", "scaled diagonal", "scaled mixed", "scaled w off-diagonal"]
 number_of_plots = 5
 for i in range(len(design_data)):
-    plot = Plot()
+    plot = Plot(xlabel=r'$\xi$', ylabel=r'$x$')
     plot.ax.plot(InitialDesignMesh.GetNodeCoordinatesX(), InitialDesignMesh.GetShapeZ(), color=TUM_BLUE_5, label="initial", linewidth=0.75, marker="|", markersize=4)
     plot.ax.plot(TargetMesh.GetNodeCoordinatesX(), TargetMesh.GetShapeZ(), color=TUM_BLUE, label="target")
     iterations = len(dfs[i]["objective"]) - 1
@@ -165,6 +165,6 @@ for i in range(len(design_data)):
                      linewidth=0.75,
                      marker='.', markersize=2,
                      label="iteration {}".format(index+1))
-    plot.add_legend(loc="upper left")
+    plot.add_legend(loc="lower right")
     plt.tight_layout(pad=0.2)
     plt.savefig(f"{figure_folder}/fig_shape_evolution_{labels[i].replace(" ", "_")}.pdf")

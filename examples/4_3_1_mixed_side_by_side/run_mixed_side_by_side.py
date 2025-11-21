@@ -81,20 +81,8 @@ def main():
     ## Target Geometry
     TargetMesh = CreateTargetMesh(x_limit, blending_filter)
 
-    # ## Compute VM Blending
-    # blending_vm_nodes = []
-    # blending_rb_nodes = []
-    # for node in TargetMesh.Nodes:
-    #     if node.x >= blending_vm_x_min_max[0] and node.x <= blending_vm_x_min_max[1]:
-    #         blending_vm_nodes.append(node)
-    #     if node.x >= blending_rb_x_min_max[0] and node.x <= blending_rb_x_min_max[1]:
-    #         blending_rb_nodes.append(node)
-
-    # blending_vm = TargetMesh.ComputeBlendingFunction(blending_vm_nodes, blending_filter)
-    # blending_rb = TargetMesh.ComputeBlendingFunction(blending_rb_nodes, blending_filter)
-
     # scaling types
-    scaling_types =["none",  "shape_diag", "shape", "shape_w_off"]
+    scaling_types = ["none",  "shape_diag", "shape", "shape_w_off"]
     scaling_types.reverse()
 
     for scaling_type in scaling_types:

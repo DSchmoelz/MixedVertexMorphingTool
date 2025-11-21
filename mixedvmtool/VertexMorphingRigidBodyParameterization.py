@@ -146,9 +146,9 @@ class VertexMorphingRigidBodyParameterization():
     @staticmethod
     def CalculateMassMatrixOffDiagonal(nodal_areas, matrix_a, matrix_b):
         M = np.zeros((matrix_a.shape[1], matrix_b.shape[1]))
-        for i in range(matrix_a.shape[1]):
-            for j in range(matrix_b.shape[1]):
-                M[i, j] = matrix_a[:, i] @ np.multiply(matrix_b[:, j], nodal_areas)
+
+        weighted_b = matrix_b * nodal_areas[:, None]
+        M = matrix_a.T @ weighted_b
 
         return M
 

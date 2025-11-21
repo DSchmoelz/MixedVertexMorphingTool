@@ -47,6 +47,8 @@ class RigidBodyParameterization():
 
     def Calculate(self, blending=None):
 
+        print("RigidBody - CalculateMappingMatrix: Starting")
+        start = time.time()
         self.MappingMatrix = np.zeros([len(self.Design.Nodes),
                                        self.ControlSize])
 
@@ -59,6 +61,9 @@ class RigidBodyParameterization():
 
         if blending is not None:
             self.MappingMatrix *= blending[:, np.newaxis]
+
+        end = time.time()
+        print(f"RigidBody - CalculateMappingMatrix: Finished in {end - start}s")
 
         if self.scaling_type == "none":
             self.scaling_matrix = np.eye(self.ControlSize)
@@ -145,8 +150,9 @@ class RigidBodyParameterization():
         center_of_gravity = self.GetCenterOfGravity()
         A = np.zeros([len(self.Design.Nodes), 1])
 
-        for design_node in self.Design.Nodes:
-            design_node_index = self.Design.GetNodeIndex(design_node.id)
+        for node_index, design_node in enumerate(self.Design.Nodes):
+
+            design_node_index = node_index
 
             A[design_node_index, 0] = design_node.x - center_of_gravity
 

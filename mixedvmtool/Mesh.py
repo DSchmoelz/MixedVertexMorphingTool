@@ -10,6 +10,7 @@
 
 # external imports
 import numpy as np
+import time
 # internal imports
 from .Node import *
 from .ShapeFunctions import *
@@ -20,6 +21,7 @@ class Mesh(object):
 
         self.Name = name
         self.Nodes = []
+        self.node_coordinates_x = None
 
     def AddNodes(self, nodes):
 
@@ -48,30 +50,24 @@ class Mesh(object):
     def GetGeometryAt(self, x):
 
         y = 0
-        # TODO: Funktion funktioniert derzeit nur für "ControlMeshes", da node.p verwendet wird und nicht node.z
-        for node in self.Nodes:
-            shape_function_lengths = self.GetNodeShapeFunctionLengths(node.id)
+        for node_index, node in enumerate(self.Nodes):
+            shape_function_lengths = self.GetNodeShapeFunctionLengths(node_index, node)
             y += LinearNodeShapeFunction(x, node.x, shape_function_lengths[0], shape_function_lengths[1]) * node.z
-
-        return y
-
-    def GetShapeFunctionValueOfNode(self, x, node):
-
-        shape_function_lengths = self.GetNodeShapeFunctionLengths(node.id)
-        y = LinearNodeShapeFunction(x, node.x, shape_function_lengths[0], shape_function_lengths[1])
 
         return y
 
     def GetNodeCoordinatesX(self):
 
-        nodes_x = []
+        if self.node_coordinates_x is None:
+            nodes_x = []
 
-        for node in self.Nodes:
-            nodes_x.append(node.x)
+            for node in self.Nodes:
+                nodes_x.append(node.x)
 
-        return np.array(nodes_x)
+            self.node_coordinates_x = np.array(nodes_x)
 
-    # TODO: Bessere Funktion Erstellen / Namen Ändern?
+        return self.node_coordinates_x
+
     def GetShapeZ(self):
 
         nodes_z = []
@@ -103,33 +99,38 @@ class Mesh(object):
             if node.id == node_id:
                 return self.Nodes.index(node)
 
-    def GetNodeShapeFunctionLengths(self, node_id):
+    def GetNodeShapeFunctionLengths(self, node_index, node):
 
-        node = self.GetNodeWithId(node_id)
         shape_function_lengths = np.zeros(2)
-
-        neighbours = self.GetNodeNeighbours(node_id)
-
-        if len(neighbours) == 1 and neighbours[0].x > node.x:
-            shape_function_lengths[1] = neighbours[0].x - node.x
-        elif len(neighbours) == 1 and neighbours[0].x < node.x:
-            shape_function_lengths[0] = node.x - neighbours[0].x
+        if node_index == 0:
+            shape_function_lengths[1] = self.Nodes[1].x - node.x
+        elif node_index == len(self.Nodes)-1:
+            shape_function_lengths[0] = node.x - self.Nodes[-2].x
         else:
-            shape_function_lengths[1] = neighbours[1].x - node.x
-            shape_function_lengths[0] = node.x - neighbours[0].x
+            shape_function_lengths[1] = self.Nodes[node_index+1].x - node.x
+            shape_function_lengths[0] = node.x - self.Nodes[node_index-1].x
 
         return shape_function_lengths
 
-    def GetNodeSpan(self, node_id):
+    # def GetNodeShapeFunctionLengths(self, node_id):
 
-        node = self.GetNodeWithId(node_id)
-        node_shape_function_lengths = self.GetNodeShapeFunctionLengths(node_id)
+    #     node = self.GetNodeWithId(node_id)
+    #     shape_function_lengths = np.zeros(2)
 
-        start = node.x - node_shape_function_lengths[0]
-        end = node.x + node_shape_function_lengths[1]
-        node_span = np.array([start, end])
+    #     start = time.time()
+    #     neighbours = self.GetNodeNeighbours(node_id)
+    #     end = time.time()
+    #     print(f"GetNodeShapeFunctionLengths: Neighbours found in {end - start}s")
 
-        return node_span
+    #     if len(neighbours) == 1 and neighbours[0].x > node.x:
+    #         shape_function_lengths[1] = neighbours[0].x - node.x
+    #     elif len(neighbours) == 1 and neighbours[0].x < node.x:
+    #         shape_function_lengths[0] = node.x - neighbours[0].x
+    #     else:
+    #         shape_function_lengths[1] = neighbours[1].x - node.x
+    #         shape_function_lengths[0] = node.x - neighbours[0].x
+
+    #     return shape_function_lengths
 
     def GetNodeNeighbours(self, node_id):
 
@@ -175,20 +176,16 @@ class Mesh(object):
 
     def GetNodeInFilterRadius(self, x_i, node_x, r_left, r_right):
 
-        nodes_in_filter = []
         node_indices = np.where((node_x > x_i - r_left) & (node_x < x_i + r_right))[0]
 
-        for node_index in node_indices:
-            nodes_in_filter.append(self.Nodes[node_index])
-
-        return nodes_in_filter
+        return node_indices
 
     def ComputeNodalAreas(self):
 
         nodal_areas = np.zeros(len(self.Nodes))
 
-        for node in self.Nodes:
-            nodal_areas[self.GetNodeIndex(node.id)] = np.sum(self.GetNodeShapeFunctionLengths(node.id))
+        for node_index, node in enumerate(self.Nodes):
+            nodal_areas[node_index] = np.sum(self.GetNodeShapeFunctionLengths(node_index, node))
 
         return nodal_areas
 
@@ -202,14 +199,15 @@ class Mesh(object):
         blending_function = np.zeros(len(self.Nodes))
         node_x = self.GetNodeCoordinatesX()
         for blending_node in node_set:
-            nodes_in_filter = self.GetNodeInFilterRadius(blending_node.x, node_x, radius, radius)
-            for node in nodes_in_filter:
+            nodes_indices_in_filter = self.GetNodeInFilterRadius(blending_node.x, node_x, radius, radius)
+            for node_index in nodes_indices_in_filter:
                 # if node.id in node_id_set:
                 #     blending_value = 1
                 # else:
-                blending_value = LinearFilter(blending_node.x, node.x, radius)
-                index = self.GetNodeIndex(node.id)
-                if blending_value > blending_function[index]:
-                    blending_function[index] = blending_value
+                blending_value = LinearFilter(blending_node.x, node_x[node_index], radius)
+                # index = self.GetNodeIndex(node.id)
+
+                if blending_value > blending_function[node_index]:
+                    blending_function[node_index] = blending_value
 
         return blending_function

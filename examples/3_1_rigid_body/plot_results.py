@@ -116,7 +116,7 @@ plt.savefig(f"{figure_folder}/fig_obj.pdf")
 ### Optimization problem plot
 TargetMesh = CreateTargetMesh(8)
 InitialDesignMesh = CreateDesignMesh(8)
-plot = Plot()
+plot = Plot(xlabel=r'$\xi$', ylabel=r'$x$')
 plot.ax.plot(InitialDesignMesh.GetNodeCoordinatesX(), InitialDesignMesh.GetShapeZ(), color=TUM_GRAY, label="initial", linewidth=0.75, marker="|", markersize=4)
 plot.ax.plot(TargetMesh.GetNodeCoordinatesX(), TargetMesh.GetShapeZ(), color=TUM_BLUE, label="target")
 plot.add_legend(loc="upper left")
@@ -155,7 +155,7 @@ labels = ["unscaled", "scaled diagonal", "scaled full"]
 # plot_steps = [6, 4, 1]
 number_of_plots = 5
 for i in range(len(design_data)):
-    plot = Plot()
+    plot = Plot(xlabel=r'$\xi$', ylabel=r'$x$')
     plot.ax.plot(InitialDesignMesh.GetNodeCoordinatesX(), InitialDesignMesh.GetShapeZ(), color=TUM_BLUE_5, label="initial", linewidth=0.75, marker="|", markersize=4)
     plot.ax.plot(TargetMesh.GetNodeCoordinatesX(), TargetMesh.GetShapeZ(), color=TUM_BLUE, label="target")
     iterations = len(dfs[i]["objective"]) - 1
