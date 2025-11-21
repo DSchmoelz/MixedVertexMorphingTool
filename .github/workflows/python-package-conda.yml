@@ -21,6 +21,7 @@ jobs:
     - name: Install Packages
       run: |
         conda env create -f environment.yml
+        conda init
         conda activate mixedvm
 #    - name: Lint with flake8
 #      run: |
