@@ -23,5 +23,6 @@ jobs:
         conda env create -f environment.yml
     - name: unit Tests
       run: |
-        conda activate mixedvm
+        conda env create -f environment.yml
+        source activate mixedvm
         pytest unitTests/
