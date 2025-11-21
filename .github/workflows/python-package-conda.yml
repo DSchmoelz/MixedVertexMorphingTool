@@ -21,7 +21,7 @@ jobs:
     - name: Install Packages
       run: |
         conda env create -f environment.yml
-        source activate mixedvm
+        conda activate mixedvm
 #    - name: Lint with flake8
 #      run: |
 #        conda install flake8
@@ -31,6 +31,4 @@ jobs:
 #        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
     - name: unit Tests
       run: |
-        conda env create -f environment.yml
-        source activate mixedvm
         pytest unitTests/
