@@ -197,3 +197,4 @@ plot.ax.plot(design_data[2]["translation"], design_data[2]["rotation"],color=TUM
 plot.add_legend()
 plt.tight_layout(pad=0.2)
 plt.savefig(f"{figure_folder}/figx_rigid_body_obj_contour.pdf")
+plt.savefig(f"{figure_folder}/figx_rigid_body_obj_contour.png", dpi=600)
