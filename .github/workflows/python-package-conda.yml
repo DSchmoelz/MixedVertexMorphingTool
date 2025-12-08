@@ -23,6 +23,7 @@ jobs:
         conda env create -f environment.yml
     - name: unit Tests
       run: |
+        export PYTHONPATH="$PWD:$PYTHONPATH"
         conda env create -f environment.yml
         source activate mixedvm
         conda activate mixedvm
