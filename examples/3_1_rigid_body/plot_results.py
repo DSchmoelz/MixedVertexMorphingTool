@@ -111,7 +111,7 @@ plot.ax.plot(dfs[2]["objective"][-1:], color=TUM_BLUE, marker="x")
 
 plot.add_legend()
 plt.tight_layout(pad=0.2)
-plt.savefig(f"{figure_folder}/fig_obj.pdf")
+plt.savefig(f"{figure_folder}/figx_rigid_body_obj.pdf")
 
 ### Optimization problem plot
 TargetMesh = CreateTargetMesh(8)
@@ -121,7 +121,7 @@ plot.ax.plot(InitialDesignMesh.GetNodeCoordinatesX(), InitialDesignMesh.GetShape
 plot.ax.plot(TargetMesh.GetNodeCoordinatesX(), TargetMesh.GetShapeZ(), color=TUM_BLUE, label="target")
 plot.add_legend(loc="upper left")
 plt.tight_layout(pad=0.2)
-plt.savefig(f"{figure_folder}/fig_opt_problem.pdf")
+plt.savefig(f"{figure_folder}/figx_rigid_body_opt_problem.pdf")
 
 ### Shape evolution
 design_data = []
@@ -175,7 +175,7 @@ for i in range(len(design_data)):
                      label="iteration {}".format(index+1))
     plot.add_legend(loc="lower right")
     plt.tight_layout(pad=0.2)
-    plt.savefig(f"{figure_folder}/fig_shape_evolution_{labels[i].replace(" ", "_")}.pdf")
+    plt.savefig(f"{figure_folder}/figx_rigid_body_shape_evolution_{labels[i].replace(" ", "_")}.pdf")
 
 ### 3D Objective plot
 obj_plot_settings = {
@@ -196,4 +196,4 @@ plot.ax.plot(design_data[1]["translation"], design_data[1]["rotation"],color=TUM
 plot.ax.plot(design_data[2]["translation"], design_data[2]["rotation"],color=TUM_BLUE, label=f"scaled full")
 plot.add_legend()
 plt.tight_layout(pad=0.2)
-plt.savefig(f"{figure_folder}/fig_obj_contour.pdf")
+plt.savefig(f"{figure_folder}/figx_rigid_body_obj_contour.pdf")

@@ -25,4 +25,5 @@ jobs:
       run: |
         conda env create -f environment.yml
         source activate mixedvm
+        conda activate mixedvm
         pytest unitTests/

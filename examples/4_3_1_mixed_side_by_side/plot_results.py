@@ -42,7 +42,7 @@ plot.ax.plot(dfs[3]["objective"][-1:], color=TUM_GRAY, marker="x")
 
 plot.add_legend()
 plt.tight_layout(pad=0.2)
-plt.savefig(f"{figure_folder}/fig_obj.pdf")
+plt.savefig(f"{figure_folder}/figx_side_by_side_obj.pdf")
 
 # Translation plot
 design_data = []
@@ -83,7 +83,7 @@ plot.ax.plot(max_iterations[3], design_data[3]["translation"][-1:], color=TUM_GR
 
 plot.add_legend()
 plt.tight_layout(pad=0.2)
-plt.savefig(f"{figure_folder}/fig_translation.pdf")
+plt.savefig(f"{figure_folder}/figx_side_by_side_translation.pdf")
 
 plot = Plot(xlabel="iteration", ylabel="rotation")
 plt.xscale('symlog')
@@ -98,7 +98,7 @@ plot.ax.plot(max_iterations[3], design_data[3]["rotation"][-1:], color=TUM_GRAY,
 
 plot.add_legend()
 plt.tight_layout(pad=0.2)
-plt.savefig(f"{figure_folder}/fig_rotation.pdf")
+plt.savefig(f"{figure_folder}/figx_side_by_side_rotation.pdf")
 
 ### Optimization problem plot
 TargetMesh = CreateTargetMesh(28, 4)
@@ -132,7 +132,7 @@ handles, labels = plt.gca().get_legend_handles_labels()
 order = [1,2,0,3]
 plt.legend([handles[idx] for idx in order],[labels[idx] for idx in order])
 plt.tight_layout(pad=0.2)
-plt.savefig(f"{figure_folder}/fig_opt_problem.pdf")
+plt.savefig(f"{figure_folder}/figx_side_by_side_opt_problem.pdf")
 
 ### Shape evolution
 labels = ["unscaled", "scaled diagonal", "scaled mixed", "scaled w off-diagonal"]
@@ -157,4 +157,4 @@ for i in range(len(design_data)):
     plot.ax.set_ylim(-6,4.5)
     plot.add_legend(loc="lower left")
     plt.tight_layout(pad=0.2)
-    plt.savefig(f"{figure_folder}/fig_shape_evolution_{labels[i].replace(" ", "_")}.pdf")
+    plt.savefig(f"{figure_folder}/figx_side_by_side_shape_evolution_{labels[i].replace(" ", "_")}.pdf")

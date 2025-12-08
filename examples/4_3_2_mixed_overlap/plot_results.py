@@ -42,7 +42,7 @@ plot.ax.plot(dfs[3]["objective"][-1:], color=TUM_GRAY, marker="x")
 
 plot.add_legend()
 plt.tight_layout(pad=0.2)
-plt.savefig(f"{figure_folder}/fig_obj.pdf")
+plt.savefig(f"{figure_folder}/figx_nested_obj.pdf")
 
 
 # Translation plot
@@ -85,7 +85,7 @@ plot.ax.plot(max_iterations[3], design_data[3]["translation"][-1:], color=TUM_GR
 
 plot.add_legend()
 plt.tight_layout(pad=0.2)
-plt.savefig(f"{figure_folder}/fig_translation.pdf")
+plt.savefig(f"{figure_folder}/figx_nested_translation.pdf")
 
 plot = Plot(xlabel="iteration", ylabel="rotation")
 plt.xscale('symlog')
@@ -100,7 +100,7 @@ plot.ax.plot(max_iterations[3], design_data[3]["rotation"][-1:], color=TUM_GRAY,
 
 plot.add_legend(loc="lower right")
 plt.tight_layout(pad=0.2)
-plt.savefig(f"{figure_folder}/fig_rotation.pdf")
+plt.savefig(f"{figure_folder}/figx_nested_rotation.pdf")
 
 ### Optimization problem plot
 TargetMesh = CreateTargetMesh(12, 4)
@@ -142,7 +142,7 @@ handles, labels = plt.gca().get_legend_handles_labels()
 order = [1,2,0,3]
 plt.legend([handles[idx] for idx in order],[labels[idx] for idx in order])
 plt.tight_layout(pad=0.2)
-plt.savefig(f"{figure_folder}/fig_opt_problem.pdf")
+plt.savefig(f"{figure_folder}/figx_nested_opt_problem.pdf")
 
 ### Shape evolution
 labels = ["unscaled", "scaled diagonal", "scaled mixed", "scaled w off-diagonal"]
@@ -167,4 +167,4 @@ for i in range(len(design_data)):
                      label="iteration {}".format(index+1))
     plot.add_legend(loc="lower right")
     plt.tight_layout(pad=0.2)
-    plt.savefig(f"{figure_folder}/fig_shape_evolution_{labels[i].replace(" ", "_")}.pdf")
+    plt.savefig(f"{figure_folder}/figx_nested_shape_evolution_{labels[i].replace(" ", "_")}.pdf")
