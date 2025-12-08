@@ -1,13 +1,11 @@
 # Mixed Vertex Morphing Tool
 
 This small python tool showcases the *mixed Vertex Morphing parameterization* with *rigid body* parameters.\
-<img src="/examples/3_1_rigid_body/references/ref_figures/figx_rigid_body_obj_contour.png" width="500"/>
-
-<embed src="/examples/3_1_rigid_body/references/ref_figures/figx_rigid_body_obj_contour.pdf" width="500" height="375"
- type="application/pdf">
 
 It runs the numerical *1D*-examples of the paper:\
-"Mixing the explicit Vertex Morphing method with rigid body parameters for node-based shape optimization".
+"Mixing the explicit Vertex Morphing method with rigid body parameters for node-based shape optimization".\
+\
+<img src="/examples/3_1_rigid_body/references/ref_figures/figx_rigid_body_obj_contour.png" width="400"/>
 
 ## Setup
 
